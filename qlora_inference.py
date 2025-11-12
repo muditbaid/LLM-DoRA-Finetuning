@@ -7,10 +7,10 @@ Example:
         --base-model meta-llama/Meta-Llama-3.1-8B-Instruct \
         --adapter-path hatexplain_qlora/adapter \
         --system-prompt "You are a helpful assistant. Your task is to classify the following social media post into hate speech or not hate speech. Respond only with 'hate' or 'not hate'." \
-        --user-input "THE SUPREME COURT IS BEING PLAYED BY THE RADICAL LEFT LOSERS, WHO HAVE NO SUPPORT, THE PUBLIC HATES THEM, AND THEIR ONLY HOPE IS THE INTIMIDATION OF THE COURT, ITSELF. WE CAN’T LET THAT HAPPEN TO OUR COUNTRY!"
+        --user-input Sleepy Joe Biden, THE WORST PRESIDENT IN THE HISTORY OF THE UNITED STATES, has allowed millions and millions of Criminals, many of them murderers, drug dealers, and people released from prisons and mental institutions from all around the world, to enter our Country through it’s very dangerous and ill conceived Open Border. Sorry, but it’s my job to get these killers and thugs out of here. THAT’S WHAT I GOT ELECTED TO DO. MAGA!"
 
-    Example 2: Sleepy Joe Biden, THE WORST PRESIDENT IN THE HISTORY OF THE UNITED STATES, has allowed millions and millions of Criminals, many of them murderers, drug dealers, and people released from prisons and mental institutions from all around the world, to enter our Country through it’s very dangerous and ill conceived Open Border. Sorry, but it’s my job to get these killers and thugs out of here. THAT’S WHAT I GOT ELECTED TO DO. MAGA!        
-        """
+    Example 2: THE SUPREME COURT IS BEING PLAYED BY THE RADICAL LEFT LOSERS, WHO HAVE NO SUPPORT, THE PUBLIC HATES THEM, AND THEIR ONLY HOPE IS THE INTIMIDATION OF THE COURT, ITSELF. WE CAN’T LET THAT HAPPEN TO OUR COUNTRY!
+"""
 
 import argparse
 from typing import Optional, Tuple

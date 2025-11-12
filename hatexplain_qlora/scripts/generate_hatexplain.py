@@ -46,7 +46,7 @@ FEW_SHOT_EXAMPLES = [
 def build_prompt(post: str) -> str:
     post = (post or "").strip()
     sections = [
-        "<system>: You are a language model trained to classify social media posts as Hate or Not Hate."
+        "<system>: You are a content moderation assistant. Label each post as hatespeech, offensive, or normal according to the HateXplain policy. Classify the following social media post. Respond with exactly one label: hatespeech, offensive, or normal."
     ]
     for idx, example in enumerate(FEW_SHOT_EXAMPLES, start=1):
         sections.append(f"Example {idx}:")

@@ -1,0 +1,22 @@
+{
+  "hatexplain": {
+    "hatespeech": 1.0,
+    "offensive": 1.0,
+    "normal": 1.0,
+    "bully": 1.0,
+    "age": 1.0,
+    "gender": 1.0,
+    "ethnicity": 1.0,
+    "religion": 1.0
+  },
+  "kaggle": {
+    "hatespeech": 1.0,
+    "offensive": 1.0,
+    "normal": 1.0,
+    "bully": 10.347721099853516,
+    "age": 12.627883911132812,
+    "gender": 201.282958984375,
+    "ethnicity": 15.02418041229248,
+    "religion": 12.446966171264648
+  }
+}

@@ -1,0 +1,10 @@
+Accuracy: 0.7081 | Macro-F1: 0.6984
+              precision    recall  f1-score   support
+
+  hatespeech     0.7369    0.8314    0.7813       593
+   offensive     0.5714    0.5547    0.5630       548
+      normal     0.7822    0.7222    0.7510       781
+
+    accuracy                         0.7081      1922
+   macro avg     0.6969    0.7028    0.6984      1922
+weighted avg     0.7082    0.7081    0.7067      1922

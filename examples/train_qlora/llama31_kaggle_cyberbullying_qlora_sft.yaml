@@ -1,6 +1,6 @@
 ### model
 model_name_or_path: meta-llama/Meta-Llama-3.1-8B-Instruct
-quantization_bit: 4          # QLoRA backbone (bnb 4-bit)
+quantization_bit: 4          # QLoRA backbone
 quantization_method: bnb     # choices: [bnb, hqq, eetq]
 trust_remote_code: true
 
@@ -8,8 +8,9 @@ trust_remote_code: true
 stage: sft
 do_train: true
 do_eval: true
-finetuning_type: lora        # LoRA on quantized base = QLoRA
-use_dora: false              # DoRA is not compatible with PTQ/QLoRA here
+finetuning_type: lora
+# DoRA is not supported with PTQ/QLoRA in LLaMA-Factory; keep standard QLoRA
+use_dora: false
 lora_rank: 8
 lora_alpha: 16
 lora_dropout: 0.05
@@ -17,34 +18,34 @@ lora_target: all
 gradient_checkpointing: true
 
 ### dataset
-dataset: hatexplain_train
-eval_dataset: hatexplain_validation
+dataset: kaggle_cyberbullying_train
+eval_dataset: kaggle_cyberbullying_validation
 template: llama3
-cutoff_len: 1024
+cutoff_len: 2048
 overwrite_cache: true
 preprocessing_num_workers: 8
 dataloader_num_workers: 2
 
 ### output
-output_dir: saves/llama31-8b/hatexplain/qlora
+output_dir: saves/llama31-8b/kaggle_cyberbullying/qlora
 logging_steps: 10
 save_steps: 500
 eval_steps: 500
 save_only_model: true
 overwrite_output_dir: true
-report_to: wandb  # [none, wandb, tensorboard, swanlab, mlflow]
+report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
 
 ### train
-per_device_train_batch_size: 4   # increase if memory allows
+per_device_train_batch_size: 1   # increase after confirming memory headroom
 gradient_accumulation_steps: 8
-learning_rate: 2.0e-5
+learning_rate: 5.0e-5
 num_train_epochs: 3.0
 lr_scheduler_type: cosine
-warmup_ratio: 0.03
-optim: paged_adamw_32bit
+warmup_ratio: 0.05
 bf16: true
 ddp_timeout: 180000000
 
 ### eval
 per_device_eval_batch_size: 1
 eval_strategy: steps
+
