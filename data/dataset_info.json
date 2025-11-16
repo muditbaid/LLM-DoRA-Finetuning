@@ -35,6 +35,96 @@
       "system": "system"
     }
   },
+  "dynahate_full": {
+    "file_name": "dynahate_full.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "system": "system"
+    }
+  },
+  "dynahate_train": {
+    "file_name": "dynahate_train.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "system": "system"
+    }
+  },
+  "dynahate_dev": {
+    "file_name": "dynahate_dev.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "system": "system"
+    }
+  },
+  "dynahate_test": {
+    "file_name": "dynahate_test.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "system": "system"
+    }
+  },
+  "tweeteval_offensive_train": {
+    "file_name": "tweeteval_offensive_train.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "system": "system"
+    }
+  },
+  "tweeteval_offensive_val": {
+    "file_name": "tweeteval_offensive_val.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "system": "system"
+    }
+  },
+  "tweeteval_offensive_test": {
+    "file_name": "tweeteval_offensive_test.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "system": "system"
+    }
+  },
+  "jigsaw_threat_train": {
+    "file_name": "jigsaw_threat_train.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "system": "system"
+    }
+  },
+  "jigsaw_threat_val": {
+    "file_name": "jigsaw_threat_val.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "system": "system"
+    }
+  },
+  "jigsaw_threat_test": {
+    "file_name": "jigsaw_threat_test.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "system": "system"
+    }
+  },
   "kaggle_cyberbullying_train": {
     "file_name": "kaggle_cyberbullying_train.jsonl",
     "columns": {
