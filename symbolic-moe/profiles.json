@@ -1,0 +1,266 @@
+{
+  "dynahate_hate": {
+    "dataset": "dynahate",
+    "label": "hate",
+    "skill_scores": {
+      "dehumanization": 35,
+      "stereotype": 35,
+      "implicit hate": 31,
+      "profanity tone": 13,
+      "identity targeting": 4,
+      "hate": 2,
+      "gender bullying": 5,
+      "ethnicity bullying": 13,
+      "sexual bullying": 2,
+      "threatening": 0,
+      "appearance": 1,
+      "age": 1
+    },
+    "stats": {
+      "dehumanization": {
+        "correct": 36,
+        "total": 37
+      },
+      "stereotype": {
+        "correct": 38,
+        "total": 41
+      },
+      "implicit hate": {
+        "correct": 33,
+        "total": 35
+      },
+      "profanity tone": {
+        "correct": 14,
+        "total": 15
+      },
+      "identity targeting": {
+        "correct": 4,
+        "total": 4
+      },
+      "hate": {
+        "correct": 2,
+        "total": 2
+      },
+      "gender bullying": {
+        "correct": 6,
+        "total": 7
+      },
+      "ethnicity bullying": {
+        "correct": 14,
+        "total": 15
+      },
+      "sexual bullying": {
+        "correct": 3,
+        "total": 4
+      },
+      "threatening": {
+        "correct": 1,
+        "total": 2
+      },
+      "appearance": {
+        "correct": 1,
+        "total": 1
+      },
+      "age": {
+        "correct": 1,
+        "total": 1
+      }
+    },
+    "total_seen": 50,
+    "total_correct": 47,
+    "accuracy": 0.94
+  },
+  "tweeteval_offense": {
+    "dataset": "tweeteval_offensive",
+    "label": "offense",
+    "skill_scores": {
+      "implicit hate": 25,
+      "stereotype": 19,
+      "threatening": 9,
+      "profanity tone": 30,
+      "identity targeting": 5,
+      "dehumanization": 18,
+      "offense": 3,
+      "age": 4,
+      "gender bullying": 5,
+      "ethnicity bullying": 2,
+      "sexual bullying": 1
+    },
+    "stats": {
+      "implicit hate": {
+        "correct": 26,
+        "total": 27
+      },
+      "stereotype": {
+        "correct": 20,
+        "total": 21
+      },
+      "threatening": {
+        "correct": 12,
+        "total": 15
+      },
+      "profanity tone": {
+        "correct": 31,
+        "total": 32
+      },
+      "identity targeting": {
+        "correct": 5,
+        "total": 5
+      },
+      "dehumanization": {
+        "correct": 19,
+        "total": 20
+      },
+      "offense": {
+        "correct": 4,
+        "total": 5
+      },
+      "age": {
+        "correct": 4,
+        "total": 4
+      },
+      "gender bullying": {
+        "correct": 6,
+        "total": 7
+      },
+      "ethnicity bullying": {
+        "correct": 2,
+        "total": 2
+      },
+      "sexual bullying": {
+        "correct": 1,
+        "total": 1
+      }
+    },
+    "total_seen": 50,
+    "total_correct": 43,
+    "accuracy": 0.86
+  },
+  "kaggle_bully": {
+    "dataset": "kaggle_cyberbullying",
+    "label": "bully",
+    "skill_scores": {
+      "stereotype": 24,
+      "appearance": 2,
+      "gender bullying": 9,
+      "bully": 11,
+      "implicit hate": 26,
+      "dehumanization": 20,
+      "ethnicity bullying": 12,
+      "threatening": 4,
+      "age": 5,
+      "profanity tone": 14,
+      "identity targeting": 4,
+      "sexual bullying": 2
+    },
+    "stats": {
+      "stereotype": {
+        "correct": 25,
+        "total": 26
+      },
+      "appearance": {
+        "correct": 2,
+        "total": 2
+      },
+      "gender bullying": {
+        "correct": 9,
+        "total": 9
+      },
+      "bully": {
+        "correct": 12,
+        "total": 13
+      },
+      "implicit hate": {
+        "correct": 27,
+        "total": 28
+      },
+      "dehumanization": {
+        "correct": 21,
+        "total": 22
+      },
+      "ethnicity bullying": {
+        "correct": 12,
+        "total": 12
+      },
+      "threatening": {
+        "correct": 4,
+        "total": 4
+      },
+      "age": {
+        "correct": 5,
+        "total": 5
+      },
+      "profanity tone": {
+        "correct": 14,
+        "total": 14
+      },
+      "identity targeting": {
+        "correct": 4,
+        "total": 4
+      },
+      "sexual bullying": {
+        "correct": 2,
+        "total": 2
+      }
+    },
+    "total_seen": 50,
+    "total_correct": 48,
+    "accuracy": 0.96
+  },
+  "jigsaw_threat": {
+    "dataset": "jigsaw_threat",
+    "label": "threat",
+    "skill_scores": {
+      "implicit hate": 20,
+      "stereotype": 10,
+      "profanity tone": 10,
+      "threatening": 41,
+      "gender bullying": 2,
+      "dehumanization": 27,
+      "age": 3,
+      "threat": 2,
+      "identity targeting": 4
+    },
+    "stats": {
+      "implicit hate": {
+        "correct": 20,
+        "total": 20
+      },
+      "stereotype": {
+        "correct": 11,
+        "total": 12
+      },
+      "profanity tone": {
+        "correct": 10,
+        "total": 10
+      },
+      "threatening": {
+        "correct": 41,
+        "total": 41
+      },
+      "gender bullying": {
+        "correct": 2,
+        "total": 2
+      },
+      "dehumanization": {
+        "correct": 28,
+        "total": 29
+      },
+      "age": {
+        "correct": 3,
+        "total": 3
+      },
+      "threat": {
+        "correct": 2,
+        "total": 2
+      },
+      "identity targeting": {
+        "correct": 4,
+        "total": 4
+      }
+    },
+    "total_seen": 50,
+    "total_correct": 49,
+    "accuracy": 0.98
+  }
+}

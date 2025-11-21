@@ -52,7 +52,14 @@ Outputs (JSON + console) prove each adapter is trustworthy on its specialization
 
 ## 2. Symbolic-MoE Style Routing
 
-We adopt the Symbolic Mixture-of-Experts idea (Chen et al., 2025) but tailor it to moderation:
+We adopt the Symbolic Mixture-of-Experts idea (Chen et al., 2025) but tailor it to moderation. The
+`symbolic-moe/` folder mirrors the original codebase (keywords → profile → routing) while skipping aggregation:
+
+- `config.py`: expert definitions, label spaces, and paths.
+- `validation_pool.jsonl`: ≈2k tagged validation samples across hate/offense/bully/threat/no-label.
+- `build_profiles.py`: runs each expert on the validation pool and saves skill scores to `profiles.json`.
+- `route_and_predict.py`: routes samples (e.g., `test_sample.jsonl`) to experts using the learned profiles and emits **all** expert outputs instead of aggregating them.
+- `predictions/*.jsonl`: raw outputs from profiling for debugging.
 
 ### 2.1 Skill/Keyword Extraction
 
@@ -70,7 +77,7 @@ Using a validation set large enough to cover every tag:
 1. Tag each validation post with skills using the method above.
 2. Run **each** expert adapter once per post to get predictions.
 3. For every skill attached to a post, update the expert’s score: +1 if the expert got the gold label correct for its task, −1 otherwise.
-4. The result is a dictionary per expert, e.g.:
+4. The result (persisted in `profiles.json`) is a dictionary per expert, e.g.:
    ```json
    {
      "hate": 85,
@@ -81,9 +88,7 @@ Using a validation set large enough to cover every tag:
      "...": 0
    }
    ```
-5. Also record a **global competency** (sum of positive scores) to bias routing toward consistently reliable models.
-
-We store these profiles under `ensemble/artifacts/` (or another JSON) so inference only needs a lookup.
+5. Also record a **global competency** (per-expert accuracy) to bias routing toward consistently reliable models.
 
 ### 2.3 Routing at Inference
 
@@ -98,7 +103,7 @@ For a new post:
 Routing outputs:
 
 - A list of `(expert_name, selected_skills, probability distribution / logits)`.
-- No aggregator is necessary if we’re willing to show multiple labels side by side; we simply surface each expert’s calibrated probabilities and final decision.
+- Since we do **not** aggregate, `route_and_predict.py` simply surfaces every expert decision that passes the routing threshold (e.g., both “hate” and “bully_age” can appear for the same post).
 
 ### 2.4 Optional Aggregation (Future)
 
@@ -122,8 +127,8 @@ For now we skip this and present multiple expert decisions explicitly.
 
 1. Train QLoRA adapters per dataset (Sec. 1). Save their checkpoints + eval metrics.
 2. Run `ensemble/run_ensemble_eval.py` (once routing is ready) to gather logits, fit temperature scaling, tune thresholds, and collect masked metrics for transparency.
-3. Build expert profiles + keyword extractor as described in Sec. 2.
-4. At inference time:
+3. Build expert profiles + keyword extractor as described in Sec. 2 (use `python -m symbolic-moe.build_profiles`).
+4. At inference time (`python -m symbolic-moe.route_and_predict` currently runs on `test_sample.jsonl`):
    - Tag incoming post → skills.
    - Route to relevant experts using profiles.
    - Run selected experts and obtain calibrated probabilities / thresholds.
