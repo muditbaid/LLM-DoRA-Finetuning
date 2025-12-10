@@ -5,23 +5,43 @@ Build skill profiles for each expert adapter using the validation pool.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 from collections import defaultdict
 from typing import Dict, List
 
 import torch
+from tqdm import tqdm
 
 from pathlib import Path
 
-from .config import (
-    EXPERTS,
-    PROFILES_PATH,
-    SKILL_FIELD,
-    SKILL_VOCAB,
-    VALIDATION_POOL,
-)
-from .io_utils import read_jsonl, write_jsonl
-from .model_utils import ExpertModel
+SYMBOLIC_ROOT = Path(__file__).resolve().parent
+
+
+def _load_module(path: Path, name: str):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to load module {name} from {path}")
+    module = importlib.util.module_from_spec(spec)
+    import sys
+
+    sys.modules[name] = module
+    spec.loader.exec_module(module)  # type: ignore
+    return module
+
+
+config_mod = _load_module(SYMBOLIC_ROOT / "config.py", "symbolic_moe_config_profiles")
+io_mod = _load_module(SYMBOLIC_ROOT / "io_utils.py", "symbolic_moe_io_profiles")
+model_mod = _load_module(SYMBOLIC_ROOT / "model_utils.py", "symbolic_moe_model_profiles")
+
+EXPERTS = config_mod.EXPERTS
+PROFILES_PATH = config_mod.PROFILES_PATH
+SKILL_FIELD = config_mod.SKILL_FIELD
+SKILL_VOCAB = config_mod.SKILL_VOCAB
+VALIDATION_POOL = config_mod.VALIDATION_POOL
+read_jsonl = io_mod.read_jsonl
+write_jsonl = io_mod.write_jsonl
+ExpertModel = model_mod.ExpertModel
 
 
 def normalize_label(text: str, mode: str) -> str:
@@ -55,12 +75,12 @@ def build_profiles(input_path: Path, limit: int | None = None) -> Dict[str, Dict
 
         print(f"[symbolic-moe] Profiling {expert_cfg.name} on {len(expert_records)} samples…")
         model = ExpertModel(expert_cfg)
-        skill_scores = defaultdict(int)
+        skill_scores_raw = defaultdict(int)
         stats = defaultdict(lambda: {"correct": 0, "total": 0})
         prediction_rows = []
         total_correct = 0
 
-        for rec in expert_records:
+        for rec in tqdm(expert_records, desc=f"{expert_cfg.name}", leave=False):
             prompt = model.build_prompt(rec.get("system", ""), rec.get("instruction", ""), rec.get("input", ""))
             pred_text = model.predict(prompt)
             gold_text = rec.get("output", "")
@@ -80,11 +100,10 @@ def build_profiles(input_path: Path, limit: int | None = None) -> Dict[str, Dict
 
             is_correct = int(norm_pred == norm_gold)
             total_correct += is_correct
-            delta = 1 if is_correct else -1
             for skill in mapped_skills:
                 stats[skill]["total"] += 1
                 stats[skill]["correct"] += is_correct
-                skill_scores[skill] += delta
+                skill_scores_raw[skill] += 1 if is_correct else -1
             prediction_rows.append(
                 {
                     "id": rec.get("id"),
@@ -104,10 +123,20 @@ def build_profiles(input_path: Path, limit: int | None = None) -> Dict[str, Dict
 
         total_seen = len(expert_records)
         accuracy = total_correct / total_seen if total_seen else 0.0
+        # normalize skill scores to [-1, 1]
+        normalized_scores = {}
+        for skill, stat in stats.items():
+            total = stat["total"]
+            if total > 0:
+                normalized_scores[skill] = (2 * stat["correct"] - total) / total
+            else:
+                normalized_scores[skill] = 0.0
+
         profiles[expert_cfg.name] = {
             "dataset": expert_cfg.dataset,
             "label": expert_cfg.label,
-            "skill_scores": skill_scores,
+            "skill_scores": normalized_scores,
+            "raw_skill_margin": dict(skill_scores_raw),
             "stats": stats,
             "total_seen": total_seen,
             "total_correct": total_correct,
@@ -126,6 +155,7 @@ def build_profiles(input_path: Path, limit: int | None = None) -> Dict[str, Dict
                 "dataset": profile["dataset"],
                 "label": profile["label"],
             "skill_scores": dict(profile["skill_scores"]),
+            "raw_skill_margin": profile.get("raw_skill_margin", {}),
             "stats": {k: dict(v) for k, v in profile["stats"].items()},
             "total_seen": profile["total_seen"],
             "total_correct": profile["total_correct"],

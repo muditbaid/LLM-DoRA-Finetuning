@@ -3,7 +3,9 @@ Model loading helpers for symbolic-moe experts.
 """
 from __future__ import annotations
 
+import importlib.util
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
 import torch
@@ -14,7 +16,24 @@ from transformers import (
     BitsAndBytesConfig,
 )
 
-from .config import BASE_MODEL, ExpertConfig
+SYMBOLIC_ROOT = Path(__file__).resolve().parent
+
+
+def _load_config():
+    spec = importlib.util.spec_from_file_location("symbolic_moe_model_config", SYMBOLIC_ROOT / "config.py")
+    if spec is None or spec.loader is None:
+        raise ImportError("Unable to load config module")
+    module = importlib.util.module_from_spec(spec)
+    import sys
+
+    sys.modules["symbolic_moe_model_config"] = module
+    spec.loader.exec_module(module)  # type: ignore
+    return module
+
+
+config_mod = _load_config()
+BASE_MODEL = config_mod.BASE_MODEL
+ExpertConfig = config_mod.ExpertConfig
 
 
 @dataclass
@@ -101,6 +120,46 @@ class ExpertModel:
 
         generated = output_ids[0, input_ids.shape[-1] :]
         return self.tokenizer.decode(generated, skip_special_tokens=True).strip()
+
+    def predict_with_confidence(self, prompt: str) -> tuple[str, float]:
+        """Greedy label with log-prob scoring over configured label_texts."""
+        inputs = self.tokenizer(prompt, return_tensors="pt")
+        input_ids = inputs["input_ids"].to(self.model.device)
+        attention_mask = inputs.get("attention_mask")
+        if attention_mask is not None:
+            attention_mask = attention_mask.to(self.model.device)
+
+        label_token_ids = [
+            self.tokenizer.encode(label, add_special_tokens=False) for label in self.config.label_texts
+        ]
+
+        scores = []
+        with torch.inference_mode():
+            for tokens in label_token_ids:
+                label_ids = torch.tensor([tokens], device=self.model.device, dtype=torch.long)
+                ids = torch.cat([input_ids, label_ids], dim=1)
+                mask = torch.cat([attention_mask, torch.ones_like(label_ids)], dim=1) if attention_mask is not None else None
+                outputs = self.model(input_ids=ids, attention_mask=mask)
+                log_probs = torch.log_softmax(outputs.logits, dim=-1)
+                prompt_len = input_ids.size(1)
+                score = 0.0
+                for idx, tok in enumerate(tokens):
+                    pos = prompt_len - 1 + idx
+                    score += float(log_probs[0, pos, tok].item())
+                scores.append(score)
+
+        # pick best label, compute softmax confidence over scores
+        import math
+
+        max_score = max(scores)
+        exp_scores = [math.exp(s - max_score) for s in scores]
+        total = sum(exp_scores)
+        probs = [s / total for s in exp_scores]
+
+        best_idx = scores.index(max_score)
+        best_label = self.config.label_texts[best_idx]
+        best_prob = probs[best_idx] if probs else 0.0
+        return best_label, best_prob
 
     def close(self) -> None:
         try:

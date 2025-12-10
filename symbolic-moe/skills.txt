@@ -1,12 +1,26 @@
-identity targeting
-implicit hate
+identity_targeting
+implicit_hate
 dehumanization
-stereotype
-sarcastic insult
-profanity tone
-threatening
-appearance bullying
-age bullying
-gender bullying
-ethnicity bullying
-sexual bullying
+stereotype_invocation
+collective_blaming
+profanity_tone
+directed_insult
+sarcastic_insult
+personal_attack
+mockery
+appearance_bullying
+age_bullying
+ethnicity_bullying
+gender_bullying
+sexual_bullying
+peer_aggression
+humiliation_attempt
+power_imbalance_cue
+explicit_threat
+conditional_threat
+violence_indication
+hostile_sentiment
+toxic_tone
+derogatory_framing
+patronizing_tone
+objectification

@@ -5,6 +5,7 @@ Run the keyword LLM multiple times per sample and keep only confident skills.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
 from collections import Counter
@@ -13,29 +14,90 @@ from typing import Iterable, List
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from tqdm import tqdm
 
-from .config import KEYWORD_MODEL, SKILL_VOCAB
-from .io_utils import read_jsonl, write_jsonl
+SYMBOLIC_ROOT = Path(__file__).resolve().parent
+
+
+def _load_module(path: Path, name: str):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to load module {name} from {path}")
+    module = importlib.util.module_from_spec(spec)
+    import sys
+
+    sys.modules[name] = module
+    spec.loader.exec_module(module)  # type: ignore
+    return module
+
+
+config_mod = _load_module(SYMBOLIC_ROOT / "config.py", "symbolic_moe_config_skill")
+io_mod = _load_module(SYMBOLIC_ROOT / "io_utils.py", "symbolic_moe_io_skill")
+
+KEYWORD_MODEL = config_mod.KEYWORD_MODEL
+SKILL_VOCAB = config_mod.SKILL_VOCAB
+read_jsonl = io_mod.read_jsonl
+write_jsonl = io_mod.write_jsonl
 
 SKILL_LIST_TEXT = "\n".join(SKILL_VOCAB) if SKILL_VOCAB else ""
 
-PROMPT_TEMPLATE = """You are identifying which conceptual skills are required to understand or classify a social media post for hate, offensive, bullying, and threat detection.
+PROMPT_TEMPLATE = """You are tagging which conceptual skills are expressed in a social media post for hate/offense/bullying/threat detection.
 
-Available skills (choose only from this list):
+Available skills (choose ONLY from this list and copy each name EXACTLY as written):
 {skills}
 
-A skill should be selected ONLY if it is clearly expressed or implied by the post.
-If the post is harmless, neutral, or unrelated to any of these, return an empty list.
+IF a concept matches a skill, you MUST output that exact skill name. Do NOT invent synonyms.
+Examples of mappings you MUST follow:
+- insulting language -> directed_insult
+- sarcasm / sarcastic tone -> sarcastic_insult
+- swearing / cursing -> profanity_tone
+- mocking / teasing -> mockery
+- rude or aggressive tone -> toxic_tone
+- personal attack -> personal_attack
+- explicit threat -> explicit_threat
 
-Return your answer exactly in this format:
-Skills: <skill1>,<skill2>,<skill3>
+Select 0–5 skills that are clearly shown in the post. If none apply, return an empty list.
 
-For an empty set, return:
+Output format (exactly):
+Skills: skill_one,skill_two
+or, when empty:
 Skills:
 
-What conceptual skills are depicted in this post?
 POST: {post}
 """
+
+RAW_TO_CANON_RAW = {
+    "insult": "directed_insult",
+    "insulting": "directed_insult",
+    "insulting language": "directed_insult",
+    "insulting tone": "directed_insult",
+    "insulting remark": "directed_insult",
+    "verbal abuse": "personal_attack",
+    "personal insult": "personal_attack",
+    "personal attack": "personal_attack",
+    "bullying": "peer_aggression",
+    "mocking": "mockery",
+    "mocking tone": "mockery",
+    "teasing": "mockery",
+    "sarcasm": "sarcastic_insult",
+    "sarcastic": "sarcastic_insult",
+    "sarcastic tone": "sarcastic_insult",
+    "swearing": "profanity_tone",
+    "swear words": "profanity_tone",
+    "cursing": "profanity_tone",
+    "curse words": "profanity_tone",
+    "offensive language": "toxic_tone",
+    "aggressive tone": "toxic_tone",
+    "rude tone": "toxic_tone",
+    "hostile tone": "hostile_sentiment",
+    "anger": "hostile_sentiment",
+    "hostility": "hostile_sentiment",
+    "threat": "explicit_threat",
+    "threatening": "explicit_threat",
+    "violent threat": "explicit_threat",
+}
+
+RAW_TO_CANON = {k.lower().replace(" ", "_"): v for k, v in RAW_TO_CANON_RAW.items()}
 
 
 def load_model(use_quantization: bool = True):
@@ -72,12 +134,29 @@ def parse_skills(text: str) -> List[str]:
     if not remainder:
         return []
     allowed = set(SKILL_VOCAB)
+    canon_map = RAW_TO_CANON
     skills = []
     for token in remainder.split(","):
-        skill = token.strip().lower()
-        if skill and skill in allowed:
+        skill = token.strip().lower().replace(" ", "_")
+        if not skill:
+            continue
+        mapped = canon_map.get(skill)
+        if mapped is None:
+            for raw, canon in canon_map.items():
+                if skill.startswith(raw):
+                    mapped = canon
+                    break
+        if mapped:
+            skill = mapped
+        if skill not in allowed:
+            for canon in allowed:
+                if skill.startswith(canon):
+                    skill = canon
+                    break
+        if skill in allowed:
             skills.append(skill)
-    return skills
+    # remove duplicates while preserving order
+    return list(dict.fromkeys(skills))
 
 
 def annotate(model, tokenizer, post: str, runs: int, min_count: int, max_new_tokens: int):
@@ -122,13 +201,13 @@ def main():
     parser.add_argument("--output", type=Path, default=Path("symbolic-moe/validation_pool_skills.jsonl"))
     parser.add_argument("--runs", type=int, default=5)
     parser.add_argument("--min-count", type=int, default=2)
-    parser.add_argument("--max-new-tokens", type=int, default=128)
+    parser.add_argument("--max-new-tokens", type=int, default=64)
     args = parser.parse_args()
 
     samples = read_jsonl(args.input)
     model, tokenizer = load_model()
     annotated = []
-    for rec in samples:
+    for rec in tqdm(samples, desc="Inferring skills"):
         post = rec.get("input") or ""
         annotation = annotate(model, tokenizer, post, args.runs, args.min_count, args.max_new_tokens)
         new_row = dict(rec)
