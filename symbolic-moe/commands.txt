@@ -1,0 +1,12 @@
+export OPENAI_API_KEY=...
+
+# 1) create + submit batches
+python symbolic-moe/batch_create.py \
+  --input symbolic-moe/validation_pool.jsonl \
+  --skills-file symbolic-moe/skills.txt \
+  --model gpt-5.1
+
+# 2) fetch + postprocess
+python symbolic-moe/batch_fetch.py \
+  --input symbolic-moe/validation_pool.jsonl \
+  --skills-file symbolic-moe/skills.txt
