@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import math
 from pathlib import Path
 from typing import Dict, Iterable, List, Tuple
 
@@ -50,6 +51,33 @@ def compute_global_strengths(profiles: Dict) -> Dict[str, float]:
     return strengths
 
 
+def _logit_from_counts(correct: int, total: int, prior: float = 1.0) -> float:
+    denom = total + 2 * prior
+    if denom <= 0:
+        return 0.0
+    p = (correct + prior) / denom
+    p = min(max(p, 1e-6), 1 - 1e-6)
+    return math.log(p / (1 - p))
+
+
+def build_skill_odds(profiles: Dict) -> tuple[Dict[str, Dict[str, float]], Dict[str, float]]:
+    """Return (skill_odds, priors) per expert using log-odds with Laplace smoothing."""
+    skill_odds: Dict[str, Dict[str, float]] = {}
+    priors: Dict[str, float] = {}
+    for name, profile in profiles.items():
+        stats = profile.get("stats", {})
+        expert_odds: Dict[str, float] = {}
+        for skill, stat in stats.items():
+            correct = int(stat.get("correct", 0))
+            total = int(stat.get("total", 0))
+            expert_odds[skill] = _logit_from_counts(correct, total)
+        skill_odds[name] = expert_odds
+        total_seen = int(profile.get("total_seen", 0))
+        total_correct = int(profile.get("total_correct", 0))
+        priors[name] = _logit_from_counts(total_correct, total_seen)
+    return skill_odds, priors
+
+
 def normalize_skills(skills: Iterable[str]) -> List[str]:
     cleaned: List[str] = []
     for skill in skills or []:
@@ -64,7 +92,7 @@ def normalize_skills(skills: Iterable[str]) -> List[str]:
 def collect_pairs(pred_dir: Path) -> Tuple[List[Tuple[float, bool]], int]:
     """Return (weight, is_correct) pairs across all experts and post count."""
     profiles = load_profiles()
-    global_strength = compute_global_strengths(profiles)
+    skill_odds, priors = build_skill_odds(profiles)
 
     all_pairs: List[Tuple[float, bool]] = []
     post_ids = set()
@@ -74,16 +102,14 @@ def collect_pairs(pred_dir: Path) -> Tuple[List[Tuple[float, bool]], int]:
         if not pred_path.exists():
             raise FileNotFoundError(f"Missing predictions file for {cfg.name}: {pred_path}")
 
-        skill_scores = profiles.get(cfg.name, {}).get("skill_scores", {})
-        strength = global_strength.get(cfg.name, 0.0)
-        if strength <= 0:
-            continue
+        expert_odds = skill_odds.get(cfg.name, {})
+        prior = priors.get(cfg.name, 0.0)
 
         for row in read_jsonl(pred_path):
             post_ids.add(row.get("id"))
             skills = normalize_skills(row.get("skill_tag") or row.get("predicted_skills") or [])
-            local = sum(skill_scores.get(s, 0) for s in skills)
-            weight = local * strength
+            local = sum(expert_odds.get(s, 0.0) for s in skills)
+            weight = prior + local
             if weight <= 0:
                 continue
             is_good = bool(row.get("is_correct"))

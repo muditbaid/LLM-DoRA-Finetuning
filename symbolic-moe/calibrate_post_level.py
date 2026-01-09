@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import math
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, Iterable, List, Tuple
@@ -56,6 +57,33 @@ def compute_global_strengths(profiles: Dict) -> Dict[str, float]:
         skill_scores = profile.get("skill_scores", {})
         strengths[name] = sum(v for v in skill_scores.values() if v > 0)
     return strengths
+
+
+def _logit_from_counts(correct: int, total: int, prior: float = 1.0) -> float:
+    denom = total + 2 * prior
+    if denom <= 0:
+        return 0.0
+    p = (correct + prior) / denom
+    p = min(max(p, 1e-6), 1 - 1e-6)
+    return math.log(p / (1 - p))
+
+
+def build_skill_odds(profiles: Dict) -> tuple[Dict[str, Dict[str, float]], Dict[str, float]]:
+    """Return (skill_odds, priors) per expert using log-odds with Laplace smoothing."""
+    skill_odds: Dict[str, Dict[str, float]] = {}
+    priors: Dict[str, float] = {}
+    for name, profile in profiles.items():
+        stats = profile.get("stats", {})
+        expert_odds: Dict[str, float] = {}
+        for skill, stat in stats.items():
+            correct = int(stat.get("correct", 0))
+            total = int(stat.get("total", 0))
+            expert_odds[skill] = _logit_from_counts(correct, total)
+        skill_odds[name] = expert_odds
+        total_seen = int(profile.get("total_seen", 0))
+        total_correct = int(profile.get("total_correct", 0))
+        priors[name] = _logit_from_counts(total_correct, total_seen)
+    return skill_odds, priors
 
 
 def normalize_skills(skills: Iterable[str]) -> List[str]:
@@ -127,7 +155,12 @@ def record_correct(gold_label: str, predictions: List[dict], dataset: str) -> bo
     return False
 
 
-def build_weights(samples: List[dict], profiles: Dict, global_strengths: Dict[str, float]) -> Dict[str, Dict[str, float]]:
+def build_weights(
+    samples: List[dict],
+    profiles: Dict,
+    skill_odds: Dict[str, Dict[str, float]],
+    priors: Dict[str, float],
+) -> Dict[str, Dict[str, float]]:
     """Return weights[expert][sample_id] = weight."""
     weights: Dict[str, Dict[str, float]] = defaultdict(dict)
     skill_cache: Dict[str, List[str]] = {}
@@ -140,16 +173,13 @@ def build_weights(samples: List[dict], profiles: Dict, global_strengths: Dict[st
         skill_cache[sid] = skills
 
     for cfg in EXPERTS:
-        profile = profiles.get(cfg.name, {})
-        skill_scores = profile.get("skill_scores", {})
-        strength = global_strengths.get(cfg.name, 0.0)
-        if strength <= 0:
-            continue
+        expert_odds = skill_odds.get(cfg.name, {})
+        prior = priors.get(cfg.name, 0.0)
         for sid, skills in skill_cache.items():
             if not skills:
                 continue
-            local = sum(skill_scores.get(s, 0) for s in skills)
-            weight = local * strength
+            local = sum(expert_odds.get(s, 0.0) for s in skills)
+            weight = prior + local
             if weight > 0:
                 weights[cfg.name][sid] = weight
 
@@ -228,8 +258,8 @@ def main() -> None:
     samples = read_jsonl(args.samples)
     preds = load_predictions(args.pred_dir)
     profiles = load_profiles()
-    strengths = compute_global_strengths(profiles)
-    weights = build_weights(samples, profiles, strengths)
+    skill_odds, priors = build_skill_odds(profiles)
+    weights = build_weights(samples, profiles, skill_odds, priors)
 
     results = sweep_alphas(samples, weights, preds, args.alphas)
     results.sort(key=lambda r: r["alpha"])

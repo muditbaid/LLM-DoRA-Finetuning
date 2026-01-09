@@ -10,3 +10,33 @@ python symbolic-moe/batch_create.py \
 python symbolic-moe/batch_fetch.py \
   --input symbolic-moe/validation_pool.jsonl \
   --skills-file symbolic-moe/skills.txt
+
+
+Here’s the routing/predict command and the full pipeline recap.
+
+Routing + predict:
+
+python symbolic-moe/route_and_predict.py \
+  --input symbolic-moe/validation_pool_skills.jsonl \
+  --output symbolic-moe/validation_pool_outputs.jsonl
+
+Pipeline
+
+Build profiles (from profile pool):
+python symbolic-moe/build_profiles.py --input symbolic-moe/profile_pool_skills.jsonl
+
+Skill inference on validation pool:
+python symbolic-moe/skill_inference.py \
+  --input symbolic-moe/validation_pool.jsonl \
+  --output symbolic-moe/validation_pool_skills.jsonl \
+  --runs 3 --min-count 2 --max-new-tokens 64
+
+Route + predict:
+python symbolic-moe/route_and_predict.py \
+  --input symbolic-moe/validation_pool_skills.jsonl \
+  --output symbolic-moe/validation_pool_outputs.jsonl
+
+Evaluate:
+python symbolic-moe/evaluate_outputs.py \
+  --input symbolic-moe/validation_pool_outputs.jsonl \
+  --metrics-out symbolic-moe/validation_metrics.txt

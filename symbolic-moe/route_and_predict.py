@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import math
 from collections import defaultdict
 from pathlib import Path
 
@@ -42,7 +43,7 @@ read_jsonl = io_mod.read_jsonl
 write_jsonl = io_mod.write_jsonl
 ExpertModel = model_mod.ExpertModel
 
-ALPHA = 0.6  # relative threshold fraction of max weight
+ALPHA = 0.4  # relative threshold fraction of max weight
 
 
 
@@ -51,6 +52,33 @@ def load_profiles():
         profiles = json.load(f)
     print(f"[routing] Loaded profiles from {PROFILES_PATH}")
     return profiles
+
+
+def _logit_from_counts(correct: int, total: int, prior: float = 1.0) -> float:
+    denom = total + 2 * prior
+    if denom <= 0:
+        return 0.0
+    p = (correct + prior) / denom
+    p = min(max(p, 1e-6), 1 - 1e-6)
+    return math.log(p / (1 - p))
+
+
+def build_skill_odds(profiles: dict) -> tuple[dict, dict]:
+    """Return (skill_odds, priors) per expert using log-odds with Laplace smoothing."""
+    skill_odds = {}
+    priors = {}
+    for name, profile in profiles.items():
+        stats = profile.get("stats", {})
+        expert_odds = {}
+        for skill, stat in stats.items():
+            correct = int(stat.get("correct", 0))
+            total = int(stat.get("total", 0))
+            expert_odds[skill] = _logit_from_counts(correct, total)
+        skill_odds[name] = expert_odds
+        total_seen = int(profile.get("total_seen", 0))
+        total_correct = int(profile.get("total_correct", 0))
+        priors[name] = _logit_from_counts(total_correct, total_seen)
+    return skill_odds, priors
 
 
 def main():
@@ -72,8 +100,7 @@ def main():
     samples = read_jsonl(args.input)
     profiles = load_profiles()
 
-    # Use uniform global strength for all experts (disable profile-scale bias)
-    global_strengths = {cfg.name: 1.0 for cfg in EXPERTS}
+    skill_odds, priors = build_skill_odds(profiles)
 
     default_map = {cfg.label: cfg.name for cfg in EXPERTS}
 
@@ -103,18 +130,14 @@ def main():
             if not profile:
                 continue
 
-            skill_scores = profile.get("skill_scores", {})
-            global_strength = global_strengths.get(cfg.name, 0.0)
-            if global_strength <= 0:
-                # this expert has no positive skill strength overall
-                continue
-
+            expert_odds = skill_odds.get(cfg.name, {})
+            prior = priors.get(cfg.name, 0.0)
             if mapped_skills:
-                local_score = sum(skill_scores.get(skill, 0) for skill in mapped_skills)
-                weight = local_score * global_strength
+                local_score = sum(expert_odds.get(skill, 0.0) for skill in mapped_skills)
+                weight = prior + local_score
             else:
-                # No skills inferred: route to all experts using their global strength as weight
-                weight = global_strength
+                # No skills inferred: fall back to expert prior only
+                weight = prior
 
             if weight > 0:
                 candidates.append((cfg.name, weight))
