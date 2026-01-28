@@ -32,17 +32,17 @@ Skill coverage on the profile pool (14,000 rows total):
 - Most frequent skills: directed_insult (6028), stereotype_invocation (5865), identity_targeting (3220)
 - Mid-frequency: coded_hostility (2984), dehumanization (2983), general_insult (2138), non_targeted_profanity (1250)
 - Rare skills: identity_based_bullying (937), appearance_based_bullying (280), age_based_bullying (265), sexual_harassment (66)
-- Note: threatening_language appears rarely or not at all in the current profile pool
+- Note: threatening_language appears 0 times in the current profile pool
 
 Per-label skill coverage (top skills per label):
-- hate: stereotype_invocation (1352), directed_insult (804), dehumanization (788), identity_targeting (540)
-- not hate: stereotype_invocation (650), directed_insult (500), dehumanization (406), general_insult (318)
-- threat: directed_insult (754), identity_targeting (367), dehumanization (363), coded_hostility (358)
-- not threat: stereotype_invocation (645), directed_insult (483), dehumanization (321), identity_targeting (313)
-- bully: directed_insult (1659), stereotype_invocation (1497), identity_targeting (700), coded_hostility (586), identity_based_bullying (473)
-- not_bully: directed_insult (165), identity_targeting (115), coded_hostility (99), stereotype_invocation (88)
-- offensive: directed_insult (1092), stereotype_invocation (790), coded_hostility (676), identity_targeting (405)
-- not offensive: stereotype_invocation (605), directed_insult (571), identity_targeting (483), coded_hostility (396)
+- hate: stereotype_invocation (1352), directed_insult (804), dehumanization (788), identity_targeting (540), coded_hostility (327)
+- not hate: stereotype_invocation (650), directed_insult (500), dehumanization (406), general_insult (318), identity_targeting (297)
+- threat: directed_insult (754), identity_targeting (367), dehumanization (363), coded_hostility (358), general_insult (282)
+- not threat: stereotype_invocation (645), directed_insult (483), dehumanization (321), identity_targeting (313), general_insult (304)
+- bully: directed_insult (1659), stereotype_invocation (1497), identity_targeting (700), coded_hostility (586), dehumanization (536)
+- not_bully: directed_insult (165), identity_targeting (115), coded_hostility (99), stereotype_invocation (88), dehumanization (73)
+- offensive: directed_insult (1092), stereotype_invocation (790), coded_hostility (676), identity_targeting (405), general_insult (369)
+- not offensive: stereotype_invocation (605), directed_insult (571), identity_targeting (483), coded_hostility (396), dehumanization (237)
 
 Empty-skill rate by label (profile pool):
 - hate: 107/1923 (5.6%), not hate: 206/1577 (13.1%)
@@ -62,10 +62,10 @@ Empty-skill rate by label (profile pool):
 
 ## 4) Routing + Prediction Results (validation)
 
-Validation set (784 samples; 196 per dataset):
-- Overall accuracy: **0.9082** (712/784)
+Validation set (3672 samples; 918 per dataset):
+- Overall accuracy: **0.8761** (3217/3672)
 - Per-dataset accuracy:
-  - dynahate: **0.9337** (183/196)
-  - jigsaw_threat: **0.9337** (183/196)
-  - kaggle_cyberbullying: **0.9541** (187/196)
-  - tweeteval_offensive: **0.8112** (159/196)
+  - dynahate: **0.9412** (864/918)
+  - jigsaw_threat: **0.9673** (888/918)
+  - kaggle_cyberbullying: **0.9401** (863/918)
+  - tweeteval_offensive: **0.6558** (602/918)

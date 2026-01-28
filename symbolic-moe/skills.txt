@@ -5,7 +5,6 @@ coded_hostility
 non_targeted_profanity
 general_insult
 threatening_language
-directed_insult
 identity_based_bullying
 appearance_based_bullying
 age_based_bullying
