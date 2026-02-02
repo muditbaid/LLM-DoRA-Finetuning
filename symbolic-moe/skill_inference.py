@@ -43,62 +43,27 @@ SKILL_LIST_TEXT = "\n".join(SKILL_VOCAB) if SKILL_VOCAB else ""
 
 PROMPT_TEMPLATE = """You are tagging which conceptual skills are expressed in a social media post for hate/offense/bullying/threat detection.
 
-Available skills (choose ONLY from this list and copy each name EXACTLY as written):
+Available skills (you may ONLY choose from this list and MUST copy each name EXACTLY as written):
 {skills}
 
-IF a concept matches a skill, you MUST output that exact skill name. Do NOT invent synonyms.
-Examples of mappings you MUST follow:
-- insulting language -> directed_insult
-- sarcasm / sarcastic tone -> sarcastic_insult
-- swearing / cursing -> profanity_tone
-- mocking / teasing -> mockery
-- rude or aggressive tone -> toxic_tone
-- personal attack -> personal_attack
-- explicit threat -> explicit_threat
+Instructions:
+- Select between 0 and 5 skills that are clearly demonstrated in the post.
+- If a concept in the post matches a skill, output that skill’s exact name.
+- If you are uncertain whether a skill applies, DO NOT select it.
+- Do NOT invent new skills, synonyms, or variations of the names.
+- Do NOT explain your reasoning or add any extra text.
 
-Select 0–5 skills that are clearly shown in the post. If none apply, return an empty list.
+Output format (MUST follow exactly):
 
-Output format (exactly):
-Skills: skill_one,skill_two
-or, when empty:
-Skills:
+If one or more skills apply:
+Skills: ["skill_one","skill_two"]
 
-POST: {post}
+If no skills apply:
+Skills: []
+
+POST:
+{post}
 """
-
-RAW_TO_CANON_RAW = {
-    "insult": "directed_insult",
-    "insulting": "directed_insult",
-    "insulting language": "directed_insult",
-    "insulting tone": "directed_insult",
-    "insulting remark": "directed_insult",
-    "verbal abuse": "personal_attack",
-    "personal insult": "personal_attack",
-    "personal attack": "personal_attack",
-    "bullying": "peer_aggression",
-    "mocking": "mockery",
-    "mocking tone": "mockery",
-    "teasing": "mockery",
-    "sarcasm": "sarcastic_insult",
-    "sarcastic": "sarcastic_insult",
-    "sarcastic tone": "sarcastic_insult",
-    "swearing": "profanity_tone",
-    "swear words": "profanity_tone",
-    "cursing": "profanity_tone",
-    "curse words": "profanity_tone",
-    "offensive language": "toxic_tone",
-    "aggressive tone": "toxic_tone",
-    "rude tone": "toxic_tone",
-    "hostile tone": "hostile_sentiment",
-    "anger": "hostile_sentiment",
-    "hostility": "hostile_sentiment",
-    "threat": "explicit_threat",
-    "threatening": "explicit_threat",
-    "violent threat": "explicit_threat",
-}
-
-RAW_TO_CANON = {k.lower().replace(" ", "_"): v for k, v in RAW_TO_CANON_RAW.items()}
-
 
 def load_model(use_quantization: bool = True):
     tokenizer = AutoTokenizer.from_pretrained(KEYWORD_MODEL, use_fast=True, trust_remote_code=True)
@@ -133,26 +98,28 @@ def parse_skills(text: str) -> List[str]:
     remainder = match.group(1).strip()
     if not remainder:
         return []
+    if remainder.startswith("[") and remainder.endswith("]"):
+        try:
+            parsed = json.loads(remainder)
+        except json.JSONDecodeError:
+            return []
+        if not isinstance(parsed, list):
+            return []
+        skills = []
+        allowed = set(SKILL_VOCAB)
+        for item in parsed:
+            if not isinstance(item, str):
+                continue
+            skill = item.strip().lower().replace(" ", "_")
+            if skill in allowed:
+                skills.append(skill)
+        return list(dict.fromkeys(skills))
     allowed = set(SKILL_VOCAB)
-    canon_map = RAW_TO_CANON
     skills = []
     for token in remainder.split(","):
         skill = token.strip().lower().replace(" ", "_")
         if not skill:
             continue
-        mapped = canon_map.get(skill)
-        if mapped is None:
-            for raw, canon in canon_map.items():
-                if skill.startswith(raw):
-                    mapped = canon
-                    break
-        if mapped:
-            skill = mapped
-        if skill not in allowed:
-            for canon in allowed:
-                if skill.startswith(canon):
-                    skill = canon
-                    break
         if skill in allowed:
             skills.append(skill)
     # remove duplicates while preserving order
