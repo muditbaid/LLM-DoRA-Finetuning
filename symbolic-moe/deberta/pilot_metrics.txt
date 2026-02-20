@@ -1,0 +1,2 @@
+Overall: 16/20 correct (0.8000 accuracy)
+dynahate: 16/20 (0.8000)

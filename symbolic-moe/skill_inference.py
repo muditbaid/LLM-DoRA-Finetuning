@@ -6,15 +6,14 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
-import json
-import re
 from collections import Counter
 from pathlib import Path
-from typing import Iterable, List
+from typing import List
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from tqdm import tqdm
+from skill_parsing import STRICT_SKILLS_OUTPUT_CONTRACT, parse_skills_from_text
 
 SYMBOLIC_ROOT = Path(__file__).resolve().parent
 
@@ -41,43 +40,33 @@ write_jsonl = io_mod.write_jsonl
 
 SKILL_LIST_TEXT = "\n".join(SKILL_VOCAB) if SKILL_VOCAB else ""
 
-PROMPT_TEMPLATE = """You are tagging which conceptual skills are expressed in a social media post for hate/offense/bullying/threat detection.
+PROMPT_TEMPLATE = """Tag skills in this post for hate/offense/bullying/threat detection.
 
-Available skills (you may ONLY choose from this list and MUST copy each name EXACTLY as written):
+Allowed skills (you may ONLY choose from this list and MUST copy each name EXACTLY):
 {skills}
 
-Instructions:
-- Select between 0 and 5 skills that are clearly demonstrated in the post.
-- If a concept in the post matches a skill, output that skill’s exact name.
-- If you are uncertain whether a skill applies, DO NOT select it.
-- Do NOT invent new skills, synonyms, or variations of the names.
-- Do NOT explain your reasoning or add any extra text.
-
-Output format (MUST follow exactly):
-
-If one or more skills apply:
-Skills: ["skill_one","skill_two"]
-
-If no skills apply:
-Skills: []
+{output_contract}
 
 POST:
 {post}
 """
 
-def load_model(use_quantization: bool = True):
+
+def load_model(precision: str = "8bit"):
     tokenizer = AutoTokenizer.from_pretrained(KEYWORD_MODEL, use_fast=True, trust_remote_code=True)
     if tokenizer.pad_token is None and tokenizer.eos_token is not None:
         tokenizer.pad_token = tokenizer.eos_token
 
     dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
+    if precision == "16bit":
+        dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
+    elif precision == "32bit":
+        dtype = torch.float32
+
     q_config = None
-    if use_quantization and torch.cuda.is_available():
+    if precision == "8bit" and torch.cuda.is_available():
         q_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_compute_dtype=torch.bfloat16,
-            bnb_4bit_use_double_quant=True,
-            bnb_4bit_quant_type="nf4",
+            load_in_8bit=True,
         )
 
     model = AutoModelForCausalLM.from_pretrained(
@@ -92,45 +81,19 @@ def load_model(use_quantization: bool = True):
 
 
 def parse_skills(text: str) -> List[str]:
-    match = re.search(r"Skills\s*:(.*)", text, flags=re.IGNORECASE)
-    if not match:
-        return []
-    remainder = match.group(1).strip()
-    if not remainder:
-        return []
-    if remainder.startswith("[") and remainder.endswith("]"):
-        try:
-            parsed = json.loads(remainder)
-        except json.JSONDecodeError:
-            return []
-        if not isinstance(parsed, list):
-            return []
-        skills = []
-        allowed = set(SKILL_VOCAB)
-        for item in parsed:
-            if not isinstance(item, str):
-                continue
-            skill = item.strip().lower().replace(" ", "_")
-            if skill in allowed:
-                skills.append(skill)
-        return list(dict.fromkeys(skills))
-    allowed = set(SKILL_VOCAB)
-    skills = []
-    for token in remainder.split(","):
-        skill = token.strip().lower().replace(" ", "_")
-        if not skill:
-            continue
-        if skill in allowed:
-            skills.append(skill)
-    # remove duplicates while preserving order
-    return list(dict.fromkeys(skills))
+    return parse_skills_from_text(text, SKILL_VOCAB)
 
 
 def annotate(model, tokenizer, post: str, runs: int, min_count: int, max_new_tokens: int):
     counter: Counter[str] = Counter()
     responses: List[str] = []
+    parser_hits_per_run: List[List[str]] = []
     for _ in range(runs):
-        prompt = PROMPT_TEMPLATE.format(skills=SKILL_LIST_TEXT, post=post.strip())
+        prompt = PROMPT_TEMPLATE.format(
+            skills=SKILL_LIST_TEXT,
+            output_contract=STRICT_SKILLS_OUTPUT_CONTRACT.strip(),
+            post=post.strip(),
+        )
         messages = [
             {"role": "system", "content": "You are a careful tagging assistant."},
             {"role": "user", "content": prompt},
@@ -145,7 +108,7 @@ def annotate(model, tokenizer, post: str, runs: int, min_count: int, max_new_tok
             "input_ids": input_ids,
             "attention_mask": attention_mask,
             "max_new_tokens": max_new_tokens,
-            "temperature": 0.7,
+            "temperature": 0.2,
             "top_p": 0.9,
             "do_sample": True,
             "pad_token_id": tokenizer.pad_token_id,
@@ -155,11 +118,18 @@ def annotate(model, tokenizer, post: str, runs: int, min_count: int, max_new_tok
         generated = output_ids[0, input_ids.shape[-1] :]
         text = tokenizer.decode(generated, skip_special_tokens=True).strip()
         responses.append(text)
-        for skill in parse_skills(text):
+
+        parsed_skills = parse_skills(text)
+        parser_hits_per_run.append(parsed_skills)
+        for skill in parsed_skills:
             counter[skill] += 1
 
     confident = [skill for skill, count in counter.items() if count >= min_count]
-    return {"predicted_skills": confident, "keyword_responses": responses}
+    return {
+        "predicted_skills": confident,
+        "keyword_responses": responses,
+        "parser_hits_per_run": parser_hits_per_run,
+    }
 
 
 def main():
@@ -169,10 +139,17 @@ def main():
     parser.add_argument("--runs", type=int, default=5)
     parser.add_argument("--min-count", type=int, default=2)
     parser.add_argument("--max-new-tokens", type=int, default=64)
+    parser.add_argument(
+        "--precision",
+        type=str,
+        choices=["8bit", "16bit", "32bit"],
+        default="16bit",
+        help="Model loading mode for keyword model.",
+    )
     args = parser.parse_args()
 
     samples = read_jsonl(args.input)
-    model, tokenizer = load_model()
+    model, tokenizer = load_model(args.precision)
     annotated = []
     for rec in tqdm(samples, desc="Inferring skills"):
         post = rec.get("input") or ""

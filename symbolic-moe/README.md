@@ -14,7 +14,23 @@ Key scripts:
 - `build_profiles.py` – builds profile vectors from per-dataset examples.
 - `skill_inference.py` – infers skills for incoming texts.
 - `route_and_predict.py` – routes each example to the selected experts and aggregates predictions.
+- `predict_post.py` – consumer-facing inference runner for single posts or JSONL batches.
 - `evaluate_outputs.py` – computes accuracy and per-dataset metrics from pooled predictions.
+
+## Consumer Inference (Single + Batch)
+
+Run one post:
+```bash
+python symbolic-moe/predict_post.py \
+  --post "If they force us to choose, the choice is between dogs and Muslims is not a difficult one"
+```
+
+Run a JSONL batch (`input` field required):
+```bash
+python symbolic-moe/predict_post.py \
+  --input symbolic-moe/test_pool.jsonl \
+  --output symbolic-moe/predict_outputs.jsonl
+```
 
 ## Evaluation Results (Validation Pool, 784 Examples)
 

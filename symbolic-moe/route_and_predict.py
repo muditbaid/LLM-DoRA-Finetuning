@@ -42,6 +42,7 @@ TEST_SAMPLE = config_mod.TEST_SAMPLE
 read_jsonl = io_mod.read_jsonl
 write_jsonl = io_mod.write_jsonl
 ExpertModel = model_mod.ExpertModel
+SharedModelRuntime = model_mod.SharedModelRuntime
 
 ALPHA = 0.4  # relative threshold fraction of max weight
 
@@ -170,29 +171,33 @@ def main():
             assignments[name].append((idx, weight))
 
     results = [dict(sample) for sample in samples]
-    for cfg in EXPERTS:
-        assigned = assignments.get(cfg.name, [])
-        if not assigned:
-            continue
-        print(f"[symbolic-moe] Running expert {cfg.name} on {len(assigned)} routed samples…")
-        model = ExpertModel(cfg)
-        for sample_idx, weight in assigned:
-            rec = samples[sample_idx]
-            prompt = model.build_prompt(rec.get("system", ""), rec.get("instruction", ""), rec.get("input", ""))
-            pred_text, confidence = model.predict_with_confidence(prompt)
-            norm_pred = normalize_label(pred_text, cfg.normalizer)
-            record = results[sample_idx]
-            record.setdefault("predictions", []).append(
-                {
-                    "expert": cfg.name,
-                    "weight": weight,
-                    "label_confidence": confidence,
-                    "raw_prediction": pred_text.strip(),
-                    "normalized_prediction": norm_pred,
-                }
-            )
-        model.close()
-        torch.cuda.empty_cache()
+    runtime = SharedModelRuntime()
+    try:
+        for cfg in EXPERTS:
+            assigned = assignments.get(cfg.name, [])
+            if not assigned:
+                continue
+            print(f"[symbolic-moe] Running expert {cfg.name} on {len(assigned)} routed samples…")
+            model = ExpertModel(cfg, runtime=runtime)
+            for sample_idx, weight in assigned:
+                rec = samples[sample_idx]
+                prompt = model.build_prompt(rec.get("system", ""), rec.get("instruction", ""), rec.get("input", ""))
+                pred_text, confidence = model.predict_with_confidence(prompt)
+                norm_pred = normalize_label(pred_text, cfg.normalizer)
+                record = results[sample_idx]
+                record.setdefault("predictions", []).append(
+                    {
+                        "expert": cfg.name,
+                        "weight": weight,
+                        "label_confidence": confidence,
+                        "raw_prediction": pred_text.strip(),
+                        "normalized_prediction": norm_pred,
+                    }
+                )
+            model.close()
+            torch.cuda.empty_cache()
+    finally:
+        runtime.close()
 
     write_jsonl(args.output, results)
     print(f"[symbolic-moe] Routed outputs saved to {args.output}")

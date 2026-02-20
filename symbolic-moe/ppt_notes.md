@@ -10,7 +10,6 @@ identity_targeting
  non_targeted_profanity
  general_insult
  threatening_language
- directed_insult
  identity_based_bullying
  appearance_based_bullying
  age_based_bullying
@@ -29,26 +28,25 @@ What profiles.json contains (per expert):
 - `total_seen`, `total_correct`, `accuracy`: overall expert reliability on profile pool
 
 Skill coverage on the profile pool (14,000 rows total):
-- Most frequent skills: directed_insult (6028), stereotype_invocation (5865), identity_targeting (3220)
-- Mid-frequency: coded_hostility (2984), dehumanization (2983), general_insult (2138), non_targeted_profanity (1250)
-- Rare skills: identity_based_bullying (937), appearance_based_bullying (280), age_based_bullying (265), sexual_harassment (66)
-- Note: threatening_language appears 0 times in the current profile pool
+- Most frequent skills: general_insult (1526), dehumanization (1322), coded_hostility (1250)
+- Mid-frequency: stereotype_invocation (682), identity_targeting (611), threatening_language (608)
+- Rare skills: identity_based_bullying (329), non_targeted_profanity (128), appearance_based_bullying (69), sexual_harassment (27), age_based_bullying (19)
 
 Per-label skill coverage (top skills per label):
-- hate: stereotype_invocation (1352), directed_insult (804), dehumanization (788), identity_targeting (540), coded_hostility (327)
-- not hate: stereotype_invocation (650), directed_insult (500), dehumanization (406), general_insult (318), identity_targeting (297)
-- threat: directed_insult (754), identity_targeting (367), dehumanization (363), coded_hostility (358), general_insult (282)
-- not threat: stereotype_invocation (645), directed_insult (483), dehumanization (321), identity_targeting (313), general_insult (304)
-- bully: directed_insult (1659), stereotype_invocation (1497), identity_targeting (700), coded_hostility (586), dehumanization (536)
-- not_bully: directed_insult (165), identity_targeting (115), coded_hostility (99), stereotype_invocation (88), dehumanization (73)
-- offensive: directed_insult (1092), stereotype_invocation (790), coded_hostility (676), identity_targeting (405), general_insult (369)
-- not offensive: stereotype_invocation (605), directed_insult (571), identity_targeting (483), coded_hostility (396), dehumanization (237)
+- hate: dehumanization (291), stereotype_invocation (201), general_insult (177), coded_hostility (151), identity_targeting (149)
+- not hate: general_insult (126), dehumanization (116), coded_hostility (91), stereotype_invocation (68), identity_targeting (63)
+- threat: threatening_language (341), coded_hostility (242), general_insult (223), dehumanization (137), identity_targeting (77)
+- not threat: general_insult (38), dehumanization (29), stereotype_invocation (27), coded_hostility (25), identity_targeting (14)
+- bully: general_insult (654), dehumanization (514), coded_hostility (512), stereotype_invocation (261), identity_targeting (204)
+- not_bully: general_insult (16), dehumanization (12), coded_hostility (9), threatening_language (5), identity_targeting (3)
+- offensive: general_insult (234), coded_hostility (158), dehumanization (154), identity_targeting (75), stereotype_invocation (71)
+- not offensive: dehumanization (69), coded_hostility (62), general_insult (58), stereotype_invocation (28), identity_targeting (26)
 
 Empty-skill rate by label (profile pool):
-- hate: 107/1923 (5.6%), not hate: 206/1577 (13.1%)
-- threat: 278/1750 (15.9%), not threat: 447/1750 (25.5%)
-- bully: 212/2807 (7.6%), not_bully: 259/693 (37.4%)
-- offensive: 50/1787 (2.8%), not offensive: 359/1713 (21.0%)
+- hate: 1522/1923 (79.1%), not hate: 1330/1577 (84.3%)
+- threat: 1231/1750 (70.3%), not threat: 1669/1750 (95.4%)
+- bully: 1899/2807 (67.7%), not_bully: 667/693 (96.2%)
+- offensive: 1442/1787 (80.7%), not offensive: 1584/1713 (92.5%)
 
 ## 3) Routing System (high-level)
 
@@ -63,9 +61,9 @@ Empty-skill rate by label (profile pool):
 ## 4) Routing + Prediction Results (validation)
 
 Validation set (3672 samples; 918 per dataset):
-- Overall accuracy: **0.8761** (3217/3672)
+- Overall accuracy: **0.8979** (3297/3672)
 - Per-dataset accuracy:
   - dynahate: **0.9412** (864/918)
   - jigsaw_threat: **0.9673** (888/918)
   - kaggle_cyberbullying: **0.9401** (863/918)
-  - tweeteval_offensive: **0.6558** (602/918)
+  - tweeteval_offensive: **0.7429** (682/918)

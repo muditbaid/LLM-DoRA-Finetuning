@@ -16,29 +16,15 @@ from pathlib import Path
 from typing import Dict, Iterable, List
 
 import requests
+from skill_parsing import STRICT_SKILLS_OUTPUT_CONTRACT
 
 
 SKILLS_PROMPT_TEMPLATE = """You are tagging which conceptual skills are expressed in a social media post for hate/offense/bullying/threat detection.
 
-Available skills (choose ONLY from this list and copy each name EXACTLY as written):
+Allowed skills (you may ONLY choose from this list and MUST copy each name EXACTLY):
 {skills}
 
-IF a concept matches a skill, you MUST output that exact skill name. Do NOT invent synonyms.
-Examples of mappings you MUST follow:
-- insulting language -> directed_insult
-- sarcasm / sarcastic tone -> sarcastic_insult
-- swearing / cursing -> profanity_tone
-- mocking / teasing -> mockery
-- rude or aggressive tone -> toxic_tone
-- personal attack -> personal_attack
-- explicit threat -> explicit_threat
-
-Select 0–5 skills that are clearly shown in the post. If none apply, return an empty list.
-
-Output format (exactly):
-Skills: skill_one,skill_two
-or, when empty:
-Skills:
+{output_contract}
 
 POST: {post}
 """
@@ -94,7 +80,11 @@ def build_requests(
         post = rec.get("input", "")
         rid = rec.get("id") or rec.get("dataset", "row")
 
-        skills_prompt = SKILLS_PROMPT_TEMPLATE.format(skills=skills_text, post=post)
+        skills_prompt = SKILLS_PROMPT_TEMPLATE.format(
+            skills=skills_text,
+            output_contract=STRICT_SKILLS_OUTPUT_CONTRACT.strip(),
+            post=post,
+        )
         labels_prompt = LABELS_PROMPT_TEMPLATE.format(post=post)
 
         skills_requests.append(

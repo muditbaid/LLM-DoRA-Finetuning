@@ -1,0 +1,5 @@
+Overall: 1515/3672 correct (0.4126 accuracy)
+dynahate: 416/918 (0.4532)
+jigsaw_threat: 454/918 (0.4946)
+kaggle_cyberbullying: 186/918 (0.2026)
+tweeteval_offensive: 459/918 (0.5000)

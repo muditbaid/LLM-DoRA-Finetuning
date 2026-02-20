@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Tuple
 
 import requests
+from skill_parsing import parse_skills_from_text
 
 
 RAW_TO_CANON = {
@@ -69,27 +70,7 @@ def load_skills(skills_path: Path) -> List[str]:
 
 
 def parse_skills(text: str, allowed: List[str]) -> List[str]:
-    match = re.search(r"Skills\\s*:(.*)", text, flags=re.IGNORECASE)
-    if not match:
-        return []
-    remainder = match.group(1).strip()
-    if not remainder:
-        return []
-    allowed_set = set(allowed)
-    skills: List[str] = []
-    for token in remainder.split(","):
-        raw = token.strip().lower().replace(" ", "_")
-        if not raw:
-            continue
-        mapped = RAW_TO_CANON.get(raw, raw)
-        if mapped not in allowed_set:
-            for canon in allowed_set:
-                if mapped.startswith(canon):
-                    mapped = canon
-                    break
-        if mapped in allowed_set:
-            skills.append(mapped)
-    return list(dict.fromkeys(skills))
+    return parse_skills_from_text(text, allowed, RAW_TO_CANON)
 
 
 def parse_labels(text: str) -> List[str]:
