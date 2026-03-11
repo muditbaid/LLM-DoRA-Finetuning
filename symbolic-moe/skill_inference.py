@@ -13,7 +13,7 @@ from typing import List
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from tqdm import tqdm
-from skill_parsing import STRICT_SKILLS_OUTPUT_CONTRACT, parse_skills_from_text
+from skill_parsing import parse_skills_from_text
 
 SYMBOLIC_ROOT = Path(__file__).resolve().parent
 
@@ -40,15 +40,29 @@ write_jsonl = io_mod.write_jsonl
 
 SKILL_LIST_TEXT = "\n".join(SKILL_VOCAB) if SKILL_VOCAB else ""
 
-PROMPT_TEMPLATE = """Tag skills in this post for hate/offense/bullying/threat detection.
+PROMPT_TEMPLATE = """You are tagging which conceptual skills are expressed in a social media post for hate/offense/bullying/threat detection.
 
-Allowed skills (you may ONLY choose from this list and MUST copy each name EXACTLY):
+Available skills (choose ONLY from this list and copy each name EXACTLY as written):
 {skills}
 
-{output_contract}
+IF a concept matches a skill, you MUST output that exact skill name. Do NOT invent synonyms.
+Examples of mappings you MUST follow:
+- insulting language -> directed_insult
+- sarcasm / sarcastic tone -> sarcastic_insult
+- swearing / cursing -> profanity_tone
+- mocking / teasing -> mockery
+- rude or aggressive tone -> toxic_tone
+- personal attack -> personal_attack
+- explicit threat -> explicit_threat
 
-POST:
-{post}
+Select 0–5 skills that are clearly shown in the post. If none apply, return an empty list.
+
+Output format (exactly):
+Skills: skill_one,skill_two
+or, when empty:
+Skills:
+
+POST: {post}
 """
 
 
@@ -84,14 +98,22 @@ def parse_skills(text: str) -> List[str]:
     return parse_skills_from_text(text, SKILL_VOCAB)
 
 
-def annotate(model, tokenizer, post: str, runs: int, min_count: int, max_new_tokens: int):
+def annotate(
+    model,
+    tokenizer,
+    post: str,
+    runs: int,
+    min_count: int,
+    max_new_tokens: int,
+    temperature: float,
+    top_p: float,
+):
     counter: Counter[str] = Counter()
     responses: List[str] = []
     parser_hits_per_run: List[List[str]] = []
     for _ in range(runs):
         prompt = PROMPT_TEMPLATE.format(
             skills=SKILL_LIST_TEXT,
-            output_contract=STRICT_SKILLS_OUTPUT_CONTRACT.strip(),
             post=post.strip(),
         )
         messages = [
@@ -108,8 +130,8 @@ def annotate(model, tokenizer, post: str, runs: int, min_count: int, max_new_tok
             "input_ids": input_ids,
             "attention_mask": attention_mask,
             "max_new_tokens": max_new_tokens,
-            "temperature": 0.2,
-            "top_p": 0.9,
+            "temperature": temperature,
+            "top_p": top_p,
             "do_sample": True,
             "pad_token_id": tokenizer.pad_token_id,
         }
@@ -140,6 +162,18 @@ def main():
     parser.add_argument("--min-count", type=int, default=2)
     parser.add_argument("--max-new-tokens", type=int, default=64)
     parser.add_argument(
+        "--temperature",
+        type=float,
+        default=0.2,
+        help="Sampling temperature for skill inference generations.",
+    )
+    parser.add_argument(
+        "--top-p",
+        type=float,
+        default=0.7,
+        help="Nucleus sampling probability mass for skill inference generations.",
+    )
+    parser.add_argument(
         "--precision",
         type=str,
         choices=["8bit", "16bit", "32bit"],
@@ -153,7 +187,16 @@ def main():
     annotated = []
     for rec in tqdm(samples, desc="Inferring skills"):
         post = rec.get("input") or ""
-        annotation = annotate(model, tokenizer, post, args.runs, args.min_count, args.max_new_tokens)
+        annotation = annotate(
+            model,
+            tokenizer,
+            post,
+            args.runs,
+            args.min_count,
+            args.max_new_tokens,
+            args.temperature,
+            args.top_p,
+        )
         new_row = dict(rec)
         new_row.update(annotation)
         annotated.append(new_row)

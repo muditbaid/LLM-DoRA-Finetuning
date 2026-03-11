@@ -171,7 +171,8 @@ def main():
             assignments[name].append((idx, weight))
 
     results = [dict(sample) for sample in samples]
-    runtime = SharedModelRuntime()
+    # Route-and-predict runs in 16-bit mode (no 8-bit quantization).
+    runtime = SharedModelRuntime(use_quantization=False)
     try:
         for cfg in EXPERTS:
             assigned = assignments.get(cfg.name, [])

@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-const API_BASE_URL = (import.meta?.env?.VITE_API_BASE_URL || "").replace(/\/+$/, "");
+const RAW_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = (RAW_API_BASE_URL || "").replace(/\/+$/, "");
 
 const MOCK_RESPONSES = [
   {
@@ -140,15 +141,22 @@ export default function SERMLApp() {
     setHarmfulFlash(false);
 
     try {
-      const endpoint = API_BASE_URL ? `${API_BASE_URL}/api/detect` : "/api/detect";
+      if (!API_BASE_URL) {
+        throw new Error("VITE_API_BASE_URL is missing");
+      }
+      const endpoint = `${API_BASE_URL}/api/detect`;
       const response = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "1",
+        },
         body: JSON.stringify({ text: clean }),
       });
 
       if (!response.ok) {
-        throw new Error(`API responded with status ${response.status}`);
+        const detail = await response.text();
+        throw new Error(`API ${response.status}: ${detail.slice(0, 200)}`);
       }
 
       const data = await response.json();
@@ -162,9 +170,10 @@ export default function SERMLApp() {
         setSafeBurst(true);
         setTimeout(() => setSafeBurst(false), 1100);
       }
-    } catch {
+    } catch (error) {
       const fallback = getFallbackMock(clean);
-      setErrorToast("API unreachable. Showing mock response.");
+      const reason = error instanceof Error ? error.message : "unknown error";
+      setErrorToast(`Remote API unreachable: ${reason}. Showing mock response.`);
       setResult(fallback);
       pushHistory(fallback);
 
@@ -282,6 +291,14 @@ export default function SERMLApp() {
               <h1 className="text-2xl font-semibold tracking-wide">SERML</h1>
             </div>
             <p className="mt-1 text-sm text-slate-400">Real-time Harmful Content Detection</p>
+            <p className="mt-2 text-xs text-slate-500 break-all">
+              Backend: {API_BASE_URL || "MISSING (set VITE_API_BASE_URL in .env and restart Vite)"}
+            </p>
+            {!API_BASE_URL && (
+              <p className="mt-1 text-[11px] text-slate-600 break-all">
+                Debug raw env value: {String(RAW_API_BASE_URL)}
+              </p>
+            )}
           </header>
 
           <section className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5">

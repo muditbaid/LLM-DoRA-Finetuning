@@ -1,0 +1,28 @@
+nohup: ignoring input
+[grid] r5_t0.15_p0.6
+[grid] r5_t0.15_p0.7
+[grid] r5_t0.2_p0.6
+[grid] r5_t0.2_p0.7
+[grid] r7_t0.15_p0.6
+[grid] r7_t0.15_p0.7
+[grid] r7_t0.2_p0.6
+[grid] r7_t0.2_p0.7
+[grid] r9_t0.15_p0.6
+[grid] r9_t0.15_p0.7
+[grid] r9_t0.2_p0.6
+[grid] r9_t0.2_p0.7
+
+[done] raw summary: symbolic-moe/grid_runs/summary.csv
+[done] ranked by pos_empty_rate then avg_skills:
+runs=9 temp=0.2 top_p=0.7 | pos_empty_rate=0.0561 neg_empty_rate=0.2812 empty_rate=0.1490 avg_skills=2.687
+runs=7 temp=0.15 top_p=0.7 | pos_empty_rate=0.0570 neg_empty_rate=0.2832 empty_rate=0.1503 avg_skills=2.587
+runs=7 temp=0.2 top_p=0.7 | pos_empty_rate=0.0570 neg_empty_rate=0.2832 empty_rate=0.1503 avg_skills=2.626
+runs=9 temp=0.15 top_p=0.7 | pos_empty_rate=0.0570 neg_empty_rate=0.2825 empty_rate=0.1501 avg_skills=2.656
+runs=5 temp=0.15 top_p=0.7 | pos_empty_rate=0.0575 neg_empty_rate=0.2865 empty_rate=0.1520 avg_skills=2.492
+runs=5 temp=0.2 top_p=0.7 | pos_empty_rate=0.0580 neg_empty_rate=0.2838 empty_rate=0.1511 avg_skills=2.514
+runs=5 temp=0.2 top_p=0.6 | pos_empty_rate=0.0589 neg_empty_rate=0.2865 empty_rate=0.1528 avg_skills=2.423
+runs=9 temp=0.15 top_p=0.6 | pos_empty_rate=0.0589 neg_empty_rate=0.2865 empty_rate=0.1528 avg_skills=2.458
+runs=7 temp=0.2 top_p=0.6 | pos_empty_rate=0.0589 neg_empty_rate=0.2871 empty_rate=0.1530 avg_skills=2.469
+runs=7 temp=0.15 top_p=0.6 | pos_empty_rate=0.0593 neg_empty_rate=0.2871 empty_rate=0.1533 avg_skills=2.438
+runs=9 temp=0.2 top_p=0.6 | pos_empty_rate=0.0593 neg_empty_rate=0.2851 empty_rate=0.1525 avg_skills=2.496
+runs=5 temp=0.15 top_p=0.6 | pos_empty_rate=0.0598 neg_empty_rate=0.2891 empty_rate=0.1544 avg_skills=2.394

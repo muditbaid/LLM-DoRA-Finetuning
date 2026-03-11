@@ -3,358 +3,364 @@
     "dataset": "dynahate",
     "label": "hate",
     "skill_scores": {
-      "not hate": 0.8977443609022556,
-      "hate": 0.9106438896189225,
-      "stereotype_invocation": 0.9107806691449815,
-      "coded_hostility": 0.9669421487603306,
-      "general_insult": 0.933993399339934,
-      "dehumanization": 0.9164619164619164,
-      "identity_targeting": 0.9245283018867925,
-      "identity_based_bullying": 0.971830985915493,
-      "threatening_language": 0.9591836734693877,
-      "non_targeted_profanity": 0.9130434782608695,
-      "appearance_based_bullying": 0.8823529411764706,
-      "age_based_bullying": 0.3333333333333333,
-      "sexual_harassment": 1.0
+      "not hate": 0.9542395693135935,
+      "dehumanization": 0.8914167528438469,
+      "identity_targeting": 0.8936924167257264,
+      "stereotype_invocation": 0.8926517571884984,
+      "general_insult": 0.8863636363636364,
+      "coded_hostility": 0.8823529411764706,
+      "hate": 0.6546762589928058,
+      "age_based_bullying": 0.8775510204081632,
+      "threatening_language": 0.8688524590163934,
+      "identity_based_bullying": 0.9155555555555556,
+      "non_targeted_profanity": 0.9137931034482759,
+      "sexual_harassment": 0.7837837837837838,
+      "appearance_based_bullying": 0.8846153846153846
     },
     "raw_skill_margin": {
-      "not hate": 1194,
-      "hate": 1386,
-      "stereotype_invocation": 245,
-      "coded_hostility": 234,
-      "general_insult": 283,
-      "dehumanization": 373,
-      "identity_targeting": 196,
-      "identity_based_bullying": 69,
-      "threatening_language": 47,
-      "non_targeted_profanity": 21,
-      "appearance_based_bullying": 15,
-      "age_based_bullying": 2,
-      "sexual_harassment": 6
+      "not hate": 709,
+      "dehumanization": 1724,
+      "identity_targeting": 1261,
+      "stereotype_invocation": 1397,
+      "general_insult": 858,
+      "coded_hostility": 525,
+      "hate": 182,
+      "age_based_bullying": 86,
+      "threatening_language": 159,
+      "identity_based_bullying": 412,
+      "non_targeted_profanity": 318,
+      "sexual_harassment": 29,
+      "appearance_based_bullying": 46
     },
     "stats": {
       "not hate": {
-        "correct": 1262,
-        "total": 1330
-      },
-      "hate": {
-        "correct": 1454,
-        "total": 1522
-      },
-      "stereotype_invocation": {
-        "correct": 257,
-        "total": 269
-      },
-      "coded_hostility": {
-        "correct": 238,
-        "total": 242
-      },
-      "general_insult": {
-        "correct": 293,
-        "total": 303
+        "correct": 726,
+        "total": 743
       },
       "dehumanization": {
-        "correct": 390,
-        "total": 407
+        "correct": 1829,
+        "total": 1934
       },
       "identity_targeting": {
-        "correct": 204,
-        "total": 212
+        "correct": 1336,
+        "total": 1411
       },
-      "identity_based_bullying": {
-        "correct": 70,
-        "total": 71
+      "stereotype_invocation": {
+        "correct": 1481,
+        "total": 1565
       },
-      "threatening_language": {
-        "correct": 48,
-        "total": 49
+      "general_insult": {
+        "correct": 913,
+        "total": 968
       },
-      "non_targeted_profanity": {
-        "correct": 22,
-        "total": 23
+      "coded_hostility": {
+        "correct": 560,
+        "total": 595
       },
-      "appearance_based_bullying": {
-        "correct": 16,
-        "total": 17
+      "hate": {
+        "correct": 230,
+        "total": 278
       },
       "age_based_bullying": {
-        "correct": 4,
-        "total": 6
+        "correct": 92,
+        "total": 98
+      },
+      "threatening_language": {
+        "correct": 171,
+        "total": 183
+      },
+      "identity_based_bullying": {
+        "correct": 431,
+        "total": 450
+      },
+      "non_targeted_profanity": {
+        "correct": 333,
+        "total": 348
       },
       "sexual_harassment": {
-        "correct": 6,
-        "total": 6
+        "correct": 33,
+        "total": 37
+      },
+      "appearance_based_bullying": {
+        "correct": 49,
+        "total": 52
       }
     },
     "total_seen": 3500,
-    "total_correct": 3339,
-    "accuracy": 0.954
+    "total_correct": 3310,
+    "accuracy": 0.9457142857142857
   },
   "tweeteval_offense": {
     "dataset": "tweeteval_offensive",
     "label": "offense",
     "skill_scores": {
-      "offensive": 0.6158113730929264,
-      "not offensive": 0.6111111111111112,
-      "general_insult": 0.6575342465753424,
-      "dehumanization": 0.4618834080717489,
-      "coded_hostility": 0.5272727272727272,
-      "identity_based_bullying": 0.8888888888888888,
-      "identity_targeting": 0.5247524752475248,
-      "threatening_language": 0.5,
-      "stereotype_invocation": 0.5555555555555556,
-      "appearance_based_bullying": 1.0,
-      "non_targeted_profanity": 1.0,
-      "age_based_bullying": -0.3333333333333333,
-      "sexual_harassment": -0.3333333333333333
+      "dehumanization": 0.45168067226890757,
+      "stereotype_invocation": 0.42024539877300615,
+      "general_insult": 0.6707616707616708,
+      "not offensive": 0.6550079491255962,
+      "offensive": 0.4520123839009288,
+      "identity_based_bullying": 0.4666666666666667,
+      "identity_targeting": 0.4398826979472141,
+      "coded_hostility": 0.5098684210526315,
+      "non_targeted_profanity": 0.8481012658227848,
+      "threatening_language": 0.39622641509433965,
+      "age_based_bullying": 0.5666666666666667,
+      "sexual_harassment": 0.5,
+      "appearance_based_bullying": 0.4
     },
     "raw_skill_margin": {
-      "offensive": 888,
-      "not offensive": 968,
-      "general_insult": 192,
-      "dehumanization": 103,
-      "coded_hostility": 116,
-      "identity_based_bullying": 16,
-      "identity_targeting": 53,
-      "threatening_language": 28,
-      "stereotype_invocation": 55,
-      "appearance_based_bullying": 4,
-      "non_targeted_profanity": 4,
-      "age_based_bullying": -1,
-      "sexual_harassment": -1
+      "dehumanization": 430,
+      "stereotype_invocation": 274,
+      "general_insult": 546,
+      "not offensive": 824,
+      "offensive": 292,
+      "identity_based_bullying": 63,
+      "identity_targeting": 300,
+      "coded_hostility": 310,
+      "non_targeted_profanity": 134,
+      "threatening_language": 63,
+      "age_based_bullying": 34,
+      "sexual_harassment": 10,
+      "appearance_based_bullying": 8
     },
     "stats": {
-      "offensive": {
-        "correct": 1165,
-        "total": 1442
-      },
-      "not offensive": {
-        "correct": 1276,
-        "total": 1584
-      },
-      "general_insult": {
-        "correct": 242,
-        "total": 292
-      },
       "dehumanization": {
-        "correct": 163,
-        "total": 223
-      },
-      "coded_hostility": {
-        "correct": 168,
-        "total": 220
-      },
-      "identity_based_bullying": {
-        "correct": 17,
-        "total": 18
-      },
-      "identity_targeting": {
-        "correct": 77,
-        "total": 101
-      },
-      "threatening_language": {
-        "correct": 42,
-        "total": 56
+        "correct": 691,
+        "total": 952
       },
       "stereotype_invocation": {
-        "correct": 77,
-        "total": 99
+        "correct": 463,
+        "total": 652
       },
-      "appearance_based_bullying": {
-        "correct": 4,
-        "total": 4
+      "general_insult": {
+        "correct": 680,
+        "total": 814
+      },
+      "not offensive": {
+        "correct": 1041,
+        "total": 1258
+      },
+      "offensive": {
+        "correct": 469,
+        "total": 646
+      },
+      "identity_based_bullying": {
+        "correct": 99,
+        "total": 135
+      },
+      "identity_targeting": {
+        "correct": 491,
+        "total": 682
+      },
+      "coded_hostility": {
+        "correct": 459,
+        "total": 608
       },
       "non_targeted_profanity": {
-        "correct": 4,
-        "total": 4
+        "correct": 146,
+        "total": 158
+      },
+      "threatening_language": {
+        "correct": 111,
+        "total": 159
       },
       "age_based_bullying": {
-        "correct": 1,
-        "total": 3
+        "correct": 47,
+        "total": 60
       },
       "sexual_harassment": {
-        "correct": 1,
-        "total": 3
+        "correct": 15,
+        "total": 20
+      },
+      "appearance_based_bullying": {
+        "correct": 14,
+        "total": 20
       }
     },
     "total_seen": 3500,
-    "total_correct": 2810,
-    "accuracy": 0.8028571428571428
+    "total_correct": 2735,
+    "accuracy": 0.7814285714285715
   },
   "kaggle_bully": {
     "dataset": "kaggle_cyberbullying",
     "label": "bully",
     "skill_scores": {
-      "not_bully": 0.7781109445277361,
-      "general_insult": 0.9641791044776119,
-      "dehumanization": 0.973384030418251,
-      "stereotype_invocation": 1.0,
-      "bully": 0.9620853080568721,
-      "coded_hostility": 0.9654510556621881,
-      "identity_targeting": 0.9710144927536232,
-      "non_targeted_profanity": 0.9801980198019802,
-      "appearance_based_bullying": 1.0,
-      "threatening_language": 0.9342105263157895,
-      "identity_based_bullying": 0.9899497487437185,
-      "age_based_bullying": 1.0,
+      "not_bully": 0.8071428571428572,
+      "general_insult": 0.9514285714285714,
+      "dehumanization": 0.9514946418499718,
+      "identity_targeting": 0.9633152173913043,
+      "coded_hostility": 0.9615384615384616,
+      "non_targeted_profanity": 0.95,
+      "stereotype_invocation": 0.9723502304147466,
+      "identity_based_bullying": 0.9623971797884842,
+      "bully": 0.8564742589703588,
+      "appearance_based_bullying": 0.971830985915493,
+      "threatening_language": 0.9440203562340967,
+      "age_based_bullying": 0.9292035398230089,
       "sexual_harassment": 1.0
     },
     "raw_skill_margin": {
-      "not_bully": 519,
-      "general_insult": 646,
-      "dehumanization": 512,
-      "stereotype_invocation": 262,
-      "bully": 1827,
-      "coded_hostility": 503,
-      "identity_targeting": 201,
-      "non_targeted_profanity": 99,
-      "appearance_based_bullying": 40,
-      "threatening_language": 142,
-      "identity_based_bullying": 197,
-      "age_based_bullying": 2,
-      "sexual_harassment": 15
+      "not_bully": 452,
+      "general_insult": 1332,
+      "dehumanization": 1687,
+      "identity_targeting": 1418,
+      "coded_hostility": 1000,
+      "non_targeted_profanity": 456,
+      "stereotype_invocation": 1266,
+      "identity_based_bullying": 819,
+      "bully": 549,
+      "appearance_based_bullying": 69,
+      "threatening_language": 371,
+      "age_based_bullying": 105,
+      "sexual_harassment": 141
     },
     "stats": {
       "not_bully": {
-        "correct": 593,
-        "total": 667
+        "correct": 506,
+        "total": 560
       },
       "general_insult": {
-        "correct": 658,
-        "total": 670
+        "correct": 1366,
+        "total": 1400
       },
       "dehumanization": {
-        "correct": 519,
-        "total": 526
-      },
-      "stereotype_invocation": {
-        "correct": 262,
-        "total": 262
-      },
-      "bully": {
-        "correct": 1863,
-        "total": 1899
-      },
-      "coded_hostility": {
-        "correct": 512,
-        "total": 521
+        "correct": 1730,
+        "total": 1773
       },
       "identity_targeting": {
-        "correct": 204,
-        "total": 207
+        "correct": 1445,
+        "total": 1472
+      },
+      "coded_hostility": {
+        "correct": 1020,
+        "total": 1040
       },
       "non_targeted_profanity": {
-        "correct": 100,
-        "total": 101
+        "correct": 468,
+        "total": 480
       },
-      "appearance_based_bullying": {
-        "correct": 40,
-        "total": 40
-      },
-      "threatening_language": {
-        "correct": 147,
-        "total": 152
+      "stereotype_invocation": {
+        "correct": 1284,
+        "total": 1302
       },
       "identity_based_bullying": {
-        "correct": 198,
-        "total": 199
+        "correct": 835,
+        "total": 851
+      },
+      "bully": {
+        "correct": 595,
+        "total": 641
+      },
+      "appearance_based_bullying": {
+        "correct": 70,
+        "total": 71
+      },
+      "threatening_language": {
+        "correct": 382,
+        "total": 393
       },
       "age_based_bullying": {
-        "correct": 2,
-        "total": 2
+        "correct": 109,
+        "total": 113
       },
       "sexual_harassment": {
-        "correct": 15,
-        "total": 15
+        "correct": 141,
+        "total": 141
       }
     },
     "total_seen": 3500,
-    "total_correct": 3372,
-    "accuracy": 0.9634285714285714
+    "total_correct": 3319,
+    "accuracy": 0.9482857142857143
   },
   "jigsaw_threat": {
     "dataset": "jigsaw_threat",
     "label": "threat",
     "skill_scores": {
-      "coded_hostility": 0.9325842696629213,
-      "threatening_language": 0.9658119658119658,
-      "dehumanization": 0.9397590361445783,
-      "threat": 0.9593826157595451,
-      "not threat": 0.9125224685440384,
-      "identity_targeting": 0.9120879120879121,
-      "general_insult": 0.9616858237547893,
-      "stereotype_invocation": 0.8846153846153846,
-      "appearance_based_bullying": 1.0,
-      "identity_based_bullying": 0.9024390243902439,
-      "age_based_bullying": 0.75,
-      "sexual_harassment": 1.0
+      "threatening_language": 0.9540229885057471,
+      "identity_targeting": 0.8993506493506493,
+      "coded_hostility": 0.9022222222222223,
+      "dehumanization": 0.9100145137880987,
+      "general_insult": 0.9349904397705545,
+      "threat": 0.9086115992970123,
+      "not threat": 0.9411764705882353,
+      "age_based_bullying": 0.8333333333333334,
+      "stereotype_invocation": 0.8681948424068768,
+      "identity_based_bullying": 0.9254658385093167,
+      "non_targeted_profanity": 0.8518518518518519,
+      "appearance_based_bullying": 0.7777777777777778,
+      "sexual_harassment": 0.8260869565217391
     },
     "raw_skill_margin": {
-      "coded_hostility": 249,
-      "threatening_language": 339,
-      "dehumanization": 156,
-      "threat": 1181,
-      "not threat": 1523,
-      "identity_targeting": 83,
-      "general_insult": 251,
-      "stereotype_invocation": 46,
-      "appearance_based_bullying": 8,
-      "identity_based_bullying": 37,
-      "age_based_bullying": 6,
-      "sexual_harassment": 3
+      "threatening_language": 830,
+      "identity_targeting": 554,
+      "coded_hostility": 406,
+      "dehumanization": 627,
+      "general_insult": 489,
+      "threat": 517,
+      "not threat": 1376,
+      "age_based_bullying": 100,
+      "stereotype_invocation": 303,
+      "identity_based_bullying": 149,
+      "non_targeted_profanity": 23,
+      "appearance_based_bullying": 7,
+      "sexual_harassment": 19
     },
     "stats": {
-      "coded_hostility": {
-        "correct": 258,
-        "total": 267
-      },
       "threatening_language": {
-        "correct": 345,
-        "total": 351
-      },
-      "dehumanization": {
-        "correct": 161,
-        "total": 166
-      },
-      "threat": {
-        "correct": 1206,
-        "total": 1231
-      },
-      "not threat": {
-        "correct": 1596,
-        "total": 1669
+        "correct": 850,
+        "total": 870
       },
       "identity_targeting": {
-        "correct": 87,
-        "total": 91
+        "correct": 585,
+        "total": 616
+      },
+      "coded_hostility": {
+        "correct": 428,
+        "total": 450
+      },
+      "dehumanization": {
+        "correct": 658,
+        "total": 689
       },
       "general_insult": {
-        "correct": 256,
-        "total": 261
+        "correct": 506,
+        "total": 523
+      },
+      "threat": {
+        "correct": 543,
+        "total": 569
+      },
+      "not threat": {
+        "correct": 1419,
+        "total": 1462
+      },
+      "age_based_bullying": {
+        "correct": 110,
+        "total": 120
       },
       "stereotype_invocation": {
-        "correct": 49,
-        "total": 52
+        "correct": 326,
+        "total": 349
+      },
+      "identity_based_bullying": {
+        "correct": 155,
+        "total": 161
+      },
+      "non_targeted_profanity": {
+        "correct": 25,
+        "total": 27
       },
       "appearance_based_bullying": {
         "correct": 8,
-        "total": 8
-      },
-      "identity_based_bullying": {
-        "correct": 39,
-        "total": 41
-      },
-      "age_based_bullying": {
-        "correct": 7,
-        "total": 8
+        "total": 9
       },
       "sexual_harassment": {
-        "correct": 3,
-        "total": 3
+        "correct": 21,
+        "total": 23
       }
     },
     "total_seen": 3500,
-    "total_correct": 3387,
-    "accuracy": 0.9677142857142857
+    "total_correct": 3378,
+    "accuracy": 0.9651428571428572
   }
 }

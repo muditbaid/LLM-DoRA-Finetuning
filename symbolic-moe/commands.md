@@ -55,10 +55,10 @@ nohup python symbolic-moe/build_profiles.py \
 nohup python symbolic-moe/route_and_predict.py \
   --input symbolic-moe/validation_pool_skills.jsonl \
   --output symbolic-moe/validation_pool_outputs.jsonl \
-  > route_and_predict.log 2>&1 &
+  > symbolic-moe/route_and_predict.log 2>&1 &
 
 nohup python symbolic-moe/route_and_predict.py \
   --input symbolic-moe/test_pool_skills.jsonl \
   --output symbolic-moe/test_pool_outputs.jsonl \
-  > route_and_predict_test.log 2>&1 &
+  > symbolic-moe/route_and_predict_test.log 2>&1 &
 ```

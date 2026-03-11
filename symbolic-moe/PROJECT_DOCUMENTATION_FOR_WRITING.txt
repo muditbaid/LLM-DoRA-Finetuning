@@ -1,0 +1,827 @@
+SYMBOLIC-MOE PROJECT DOSSIER
+
+Purpose of this document
+
+This file is a writing-oriented dossier for the symbolic-moe project inside this repository. It is meant to capture what the project is, what it contains, how it behaves, what assets exist around it, and what the current implementation state looks like. It is not written as a reproduction guide. It is written so you can describe the project accurately in thesis text, reports, presentations, or documentation.
+
+1. Project identity
+
+Project name:
+symbolic-moe
+
+Location:
+LLaMA-Factory/symbolic-moe
+
+Project type:
+A symbolic mixture-of-experts style moderation pipeline layered on top of multiple task-specific Llama 3.1 8B QLoRA adapters.
+
+Primary research/application goal:
+Route a social media post to the most relevant moderation experts by first inferring "skills" (semantic moderation cues), then using learned expert profiles to decide which experts should run, then returning the routed experts' predictions.
+
+Domain:
+Social content moderation.
+
+Moderation scopes covered by the current implementation:
+- Hate speech
+- Offensive language
+- Cyberbullying
+- Threat detection
+
+High-level design choice:
+The system prefers specialist experts over one monolithic classifier. Each expert is trained or configured for a specific moderation task, and routing determines which experts should be applied to a given post.
+
+High-level philosophical framing:
+The project borrows the Symbolic-MoE idea (skill-based routing from inferred symbolic tags) and adapts it to moderation, where a post can simultaneously express multiple harmful patterns and may need multiple specialist judgments.
+
+2. Core conceptual pipeline
+
+The implemented pipeline is:
+
+Step 1:
+Take a post.
+
+Step 2:
+Infer symbolic "skills" from the post using a base language model prompted as a tagging assistant.
+
+Step 3:
+Compare the inferred skills against precomputed per-expert profile statistics.
+
+Step 4:
+Compute routing weights for each expert using smoothed log-odds from the expert's skill history plus a prior based on global expert accuracy.
+
+Step 5:
+Select one or more experts whose routing weights are strong enough.
+
+Step 6:
+Run only those experts.
+
+Step 7:
+Return the predictions from those experts, either as a raw routed output file or as a simplified consumer-facing label list.
+
+Important architectural detail:
+The main routed pipeline returns multiple expert decisions rather than forcing one aggregated final label. This is a multi-expert alerting style pipeline, not a hard single-label ensemble in its current main form.
+
+3. Base model and expert family
+
+Base foundation model:
+meta-llama/Meta-Llama-3.1-8B-Instruct
+
+Where it is defined:
+symbolic-moe/config.py
+
+Keyword model:
+The keyword/skill inference model defaults to the same base model as the experts (KEYWORD_MODEL = BASE_MODEL).
+
+Expert runtime implementation:
+symbolic-moe/model_utils.py
+
+How model loading works:
+- A shared tokenizer is created once from the base model.
+- A single base causal LM is loaded.
+- LoRA adapters are loaded into that base model.
+- The active adapter is switched depending on which expert is being used.
+- This avoids reloading the base model for every expert.
+
+Quantization behavior:
+- SharedModelRuntime defaults to 8-bit loading when CUDA is available.
+- route_and_predict.py explicitly disables quantization and uses 16-bit style inference for routed expert execution.
+
+Precision logic:
+- If GPU is available, bfloat16 is used unless overridden by the quantization path.
+- If GPU is not available, float32 is used.
+
+Why that matters for writing:
+The project is optimized around reusing one large Llama base and swapping LoRA adapters rather than keeping multiple fully separate models in memory.
+
+4. The four current experts
+
+The active expert list is defined in symbolic-moe/config.py.
+
+Expert 1:
+Name: dynahate_hate
+Dataset tag: dynahate
+Task label family: hate
+Adapter path: saves/llama31-8b/dynahate/qlora
+Allowed label texts:
+- hate
+- not hate
+Normalizer mode: simple
+Max generation length: 8 new tokens
+
+Expert 2:
+Name: tweeteval_offense
+Dataset tag: tweeteval_offensive
+Task label family: offense
+Adapter path: saves/llama31-8b/tweeteval_offensive/qlora
+Allowed label texts:
+- offensive
+- not offensive
+Normalizer mode: simple
+Max generation length: 8 new tokens
+
+Expert 3:
+Name: kaggle_bully
+Dataset tag: kaggle_cyberbullying
+Task label family: bully
+Adapter path: saves/llama31-8b/kaggle_cyberbullying/qlora
+Allowed label texts:
+- label: bully; type: age
+- label: bully; type: gender
+- label: bully; type: ethnicity
+- label: bully; type: religion
+- label: bully; type: none
+- label: not_bully; type: none
+Normalizer mode: bully
+Max generation length: 16 new tokens
+
+Expert 4:
+Name: jigsaw_threat
+Dataset tag: jigsaw_threat
+Task label family: threat
+Adapter path: saves/llama31-8b/jigsaw_threat/qlora
+Allowed label texts:
+- threat
+- not threat
+Normalizer mode: simple
+Max generation length: 8 new tokens
+
+Important label-normalization detail:
+For the bullying expert, outputs are collapsed to either "bully" or "not_bully" during normalization. The subtype can still appear in the raw prediction string, but the main normalizer reduces it to the primary bullying decision for comparison and routing evaluation.
+
+5. The symbolic skill layer
+
+Skill vocabulary source:
+symbolic-moe/skills.txt
+
+How the vocabulary is loaded:
+config.py reads the file at startup and lowercases all non-empty lines into SKILL_VOCAB.
+
+Observed skill examples from artifacts and code:
+- dehumanization
+- identity_targeting
+- stereotype_invocation
+- general_insult
+- coded_hostility
+- identity_based_bullying
+- threatening_language
+- non_targeted_profanity
+- age_based_bullying
+- sexual_harassment
+- appearance_based_bullying
+
+Role of skills:
+Skills are the symbolic interface between raw text and expert routing. They are not final labels. They are explanatory intermediate cues that represent moderation-relevant traits in the text.
+
+How skills are inferred:
+skill_inference.py prompts the model multiple times, parses the returned skills, counts repetitions, and keeps only skills that appear at least a configured minimum number of times.
+
+Prompt shape:
+The skill prompt asks the model to choose only from the allowed skill list, output 0 to 5 skills, and format the answer beginning with "Skills:".
+
+Stability mechanism:
+The same post is tagged multiple times; only repeated skills survive. This reduces one-shot variability from generative sampling.
+
+Sampling settings for the standard script:
+- runs default: 5
+- min-count default: 2
+- max-new-tokens default: 64
+- temperature default: 0.2
+- top-p default: 0.7
+- precision default: 16bit
+
+Parsing contract:
+symbolic-moe/skill_parsing.py defines a strict output contract:
+Skills: ["skill_one","skill_two"]
+
+Parser tolerance:
+Even though a strict format is defined, the parser tolerates:
+- empty "Skills:"
+- "Skills: []"
+- bracketed non-JSON lists
+- CSV after "Skills:"
+- fallback scanning for exact skill names in the full response if structured parsing fails
+
+Why that matters:
+The project is defensive about LLM formatting drift and tries to salvage useful skill tags from imperfect responses.
+
+6. Offline profile construction
+
+Main file:
+symbolic-moe/build_profiles.py
+
+Purpose:
+Measure how each expert performs on posts associated with particular skills, then convert that into a per-expert routing profile.
+
+Input source used by default in code:
+symbolic-moe/validation_pool.jsonl
+
+Input source used in the recorded command workflow:
+symbolic-moe/profile_pool_skills.jsonl
+
+This distinction matters:
+Although the default code path points at validation_pool.jsonl, the actual documented run sequence in commands.md uses profile_pool_skills.jsonl to build the profiles. The existing profiles.json appears to have been built from the larger profile pool, not the smaller validation pool.
+
+How records are selected:
+build_profiles.py filters the global input rows by dataset so each expert is profiled only on its own dataset rows.
+
+Per-record process:
+- Build that expert's prompt from system + instruction + input.
+- Run the expert.
+- Normalize prediction.
+- Normalize gold label.
+- Determine which skills to credit for this example.
+- If predicted_skills is present and non-empty, use those recognized skills.
+- Otherwise fall back to the record's label field, or "none".
+- Add +1 to a skill margin if the expert is correct for that example.
+- Add -1 if the expert is wrong for that example.
+
+Stored profile fields:
+- dataset
+- label
+- skill_scores
+- raw_skill_margin
+- stats
+- total_seen
+- total_correct
+- accuracy
+
+Normalization of skill_scores:
+The final skill score is scaled to the range [-1, 1] by:
+(2 * correct - total) / total
+
+Outputs generated during profile building:
+- symbolic-moe/profiles.json
+- symbolic-moe/predictions/*.jsonl
+
+What predictions/*.jsonl contains:
+For each expert, one row per profiled example, including:
+- id
+- dataset
+- skill_tag
+- full prompt parts
+- normalized gold label
+- raw prediction
+- normalized prediction
+- correctness boolean
+
+Current profile statistics observed in profiles.json
+
+Number of profiled examples per expert:
+3500 each
+
+This implies:
+The active profiles were generated from a 14,000-row pool split evenly across the 4 tasks.
+
+Global expert accuracies in profiles.json:
+- dynahate_hate: 0.9457
+- tweeteval_offense: 0.7814
+- kaggle_bully: 0.9483
+- jigsaw_threat: 0.9651
+
+Top positive skill associations by expert (from current profiles.json)
+
+dynahate_hate:
+- not hate: 0.9542
+- identity_based_bullying: 0.9156
+- non_targeted_profanity: 0.9138
+- identity_targeting: 0.8937
+- stereotype_invocation: 0.8927
+- dehumanization: 0.8914
+
+tweeteval_offense:
+- non_targeted_profanity: 0.8481
+- general_insult: 0.6708
+- not offensive: 0.6550
+- age_based_bullying: 0.5667
+- coded_hostility: 0.5099
+- sexual_harassment: 0.5000
+
+kaggle_bully:
+- sexual_harassment: 1.0000
+- stereotype_invocation: 0.9724
+- appearance_based_bullying: 0.9718
+- identity_targeting: 0.9633
+- identity_based_bullying: 0.9624
+- coded_hostility: 0.9615
+
+jigsaw_threat:
+- threatening_language: 0.9540
+- not threat: 0.9412
+- general_insult: 0.9350
+- identity_based_bullying: 0.9255
+- dehumanization: 0.9100
+- threat: 0.9086
+
+Interpretive note:
+These are empirical routing signals, not theoretical taxonomies. They reflect where each expert tended to succeed in the profiling pool.
+
+7. Routing logic
+
+Main file:
+symbolic-moe/route_and_predict.py
+
+Core routing data source:
+profiles.json
+
+Routing math:
+The script converts per-skill counts into log-odds using Laplace smoothing.
+
+Per-expert prior:
+The expert's overall accuracy is also converted into a smoothed log-odds prior.
+
+If a sample has inferred skills:
+weight = prior + sum(log-odds(skill_i for that expert))
+
+If a sample has no inferred skills:
+weight = prior only
+
+Selection rule:
+- Keep only experts with positive weight.
+- Sort descending by weight.
+- If skills are present, select experts whose weight is at least ALPHA times the top weight.
+- ALPHA in code is 0.4.
+- If that still produces none, fall back to the top candidate.
+- If no skills are present, keep all positive-weight experts.
+
+Important discrepancy with the README:
+README.md describes alpha = 0.6 and "no hard cap" behavior. The current route_and_predict.py code uses ALPHA = 0.4 and a relative threshold filter. For thesis writing, the implementation and the README should be treated as different snapshots of the project.
+
+Execution strategy:
+- Build assignment lists first.
+- Group rows by expert.
+- Run each expert over all rows assigned to it.
+- Append per-expert predictions into each sample record.
+
+Per-prediction fields written into output JSONL:
+- expert
+- weight
+- label_confidence
+- raw_prediction
+- normalized_prediction
+
+Confidence calculation detail:
+The expert does not estimate confidence by free-form decoding probability of the generated text. Instead, predict_with_confidence scores each predefined label_text by token log-probability and then softmaxes across those label candidates.
+
+Why that matters:
+Confidence is a constrained label-choice confidence, not an unconstrained generation confidence.
+
+8. Consumer-facing inference
+
+Main file:
+symbolic-moe/predict_post.py
+
+Intended purpose:
+Single-post or JSONL-batch inference for an end-user workflow:
+post -> skills -> routing -> expert predictions -> simplified output list
+
+Current output style:
+It returns only positive labels from routed experts. Negative labels are filtered out.
+
+Example consumer output shape:
+{
+  "post": "...",
+  "predicted_skills": [...],
+  "output": [
+    {"label": "hate", "confidence": 0.8123},
+    {"label": "bully", "confidence": 0.7011}
+  ]
+}
+
+Prompting strategy in this script:
+It does not rely on prompts from the input dataset rows. It has built-in default prompts for hate, offense, threat, and bullying.
+
+Important implementation mismatch:
+predict_post.py currently calls skill_inference.annotate(...) without passing the required temperature and top_p arguments that the current annotate() signature expects.
+
+Practical implication:
+As the code currently stands, predict_post.py appears out of sync with skill_inference.py and may fail unless that signature mismatch has been patched elsewhere. This is a real code-state detail worth documenting.
+
+9. Evaluation logic
+
+Main file:
+symbolic-moe/evaluate_outputs.py
+
+Primary scoring rule:
+A row is counted as correct if the gold label appears anywhere in the routed experts' normalized predictions.
+
+Negative-label special case:
+If the gold label is a negation like "not threat" or "not_hate", the row is also counted as correct when the corresponding positive label does not appear in any prediction.
+
+This means:
+The evaluator is designed for a multi-expert alert setting, not a single forced answer.
+
+Additional metrics produced:
+- overall accuracy
+- top-1 routing precision
+- gold expert recall at top-1 through top-4
+- per-dataset accuracy
+- per-dataset top-1 accuracy
+- per-dataset gold expert recall at top-k
+
+10. Current datasets and pools
+
+The project contains several JSONL pools and evaluation artifacts.
+
+Observed major pools
+
+profile_pool.jsonl:
+14000 rows
+
+profile_pool_skills.jsonl:
+14000 rows
+
+validation_pool.jsonl:
+3672 rows
+
+validation_pool_skills.jsonl:
+3672 rows
+
+validation_pool_outputs.jsonl:
+3672 rows
+
+test_pool.jsonl:
+1920 rows
+
+test_pool_skills.jsonl:
+1920 rows
+
+test_pool_outputs.jsonl:
+1920 rows
+
+test_one.jsonl / test_one_skills.jsonl / test_one_outputs.jsonl:
+1 row each
+
+validation_pool_next200.jsonl:
+200 rows
+
+validation_pool_pilot.jsonl:
+20 rows
+
+validation_pool_remaining.jsonl:
+564 rows
+
+validation_pool_multilabel_gpt20.jsonl:
+20 rows
+
+validation_pool_multilabel_gpt20_200.jsonl:
+199 rows
+
+validation_pool_skills_gpt.jsonl:
+9 rows
+
+Dataset composition of the main validation pool:
+3672 total rows split evenly:
+- dynahate: 918
+- jigsaw_threat: 918
+- kaggle_cyberbullying: 918
+- tweeteval_offensive: 918
+
+Dataset composition of the main test pool:
+1920 total rows split evenly:
+- dynahate: 480
+- jigsaw_threat: 480
+- kaggle_cyberbullying: 480
+- tweeteval_offensive: 480
+
+11. Current skill-inference artifact observations
+
+From validation_pool_skills.jsonl:
+- total rows: 3672
+- rows with no predicted skills: 1630
+
+This means:
+About 44.4 percent of validation rows ended up with an empty inferred skill list in that particular artifact.
+
+Most frequent inferred skills in validation_pool_skills.jsonl:
+- dehumanization: 1419
+- identity_targeting: 1090
+- stereotype_invocation: 992
+- general_insult: 964
+- coded_hostility: 711
+- identity_based_bullying: 458
+- threatening_language: 450
+- non_targeted_profanity: 264
+- age_based_bullying: 115
+- sexual_harassment: 72
+- appearance_based_bullying: 37
+
+Interpretive note:
+The heavy number of empty-skill rows indicates that routing often falls back to the expert priors rather than relying purely on explicit skill evidence.
+
+12. Recorded performance metrics
+
+Validation metrics file:
+symbolic-moe/validation_metrics.txt
+
+Current values there:
+- Overall: 3297/3672 correct (0.8979)
+- Routing precision (top-1): 2091/3672 (0.5694)
+- Gold expert recall (top-1): 1041/3672 (0.2835)
+- Gold expert recall (top-2): 1871/3672 (0.5095)
+- Gold expert recall (top-3): 2754/3672 (0.7500)
+- Gold expert recall (top-4): 3567/3672 (0.9714)
+
+Per-dataset validation accuracy:
+- dynahate: 864/918 (0.9412)
+- jigsaw_threat: 888/918 (0.9673)
+- kaggle_cyberbullying: 863/918 (0.9401)
+- tweeteval_offensive: 682/918 (0.7429)
+
+Per-dataset validation top-1 precision:
+- dynahate: 416/918 (0.4532)
+- jigsaw_threat: 805/918 (0.8769)
+- kaggle_cyberbullying: 411/918 (0.4477)
+- tweeteval_offensive: 459/918 (0.5000)
+
+Notable routing behavior:
+- jigsaw_threat routes strongly as a top-1 choice.
+- dynahate and tweeteval_offense often do not surface as the top-ranked routed expert even when they are the gold-task expert.
+
+Alternative validation snapshot:
+symbolic-moe/validation_metrics_skill_odds.txt
+
+Values there:
+- Overall: 712/784 correct (0.9082)
+- Routing precision (top-1): 449/784 (0.5727)
+- dynahate: 183/196 (0.9337)
+- jigsaw_threat: 183/196 (0.9337)
+- kaggle_cyberbullying: 187/196 (0.9541)
+- tweeteval_offensive: 159/196 (0.8112)
+
+Interpretive caution:
+The repository contains multiple metric snapshots from different subsets and parameter choices. Any thesis write-up should tie each metric to its exact artifact and evaluation split.
+
+Test metrics snapshot:
+symbolic-moe/test600_metrics.txt
+
+Two result blocks are stored there:
+
+Block 1:
+- Overall: 532/600 (0.8867)
+- dynahate: 133/150 (0.8867)
+- jigsaw_threat: 143/150 (0.9533)
+- kaggle_cyberbullying: 118/150 (0.7867)
+- tweeteval_offensive: 138/150 (0.9200)
+
+Block 2 ("weighted routing threshold = 70. global factor"):
+- Overall: 533/600 (0.8883)
+- dynahate: 133/150 (0.8867)
+- jigsaw_threat: 143/150 (0.9533)
+- kaggle_cyberbullying: 118/150 (0.7867)
+- tweeteval_offensive: 139/150 (0.9267)
+
+Practical summary of observed strengths:
+- Threat detection is consistently strong.
+- Hate is strong.
+- Bullying is strong in profile accuracy but weaker in some routed test metrics.
+- Offense is the weakest expert by profile accuracy, but still performs competitively in some test snapshots.
+
+13. Grid search experiments for skill inference
+
+Automation file:
+symbolic-moe/run_skill_grid.sh
+
+What it sweeps:
+- runs: 5, 7, 9
+- temperature: 0.15, 0.2
+- top_p: 0.6, 0.7
+
+Total combinations:
+12
+
+Output artifacts:
+- symbolic-moe/grid_runs/validation_pool_skills_*.jsonl
+- symbolic-moe/grid_runs/skill_inference_*.log
+- symbolic-moe/grid_runs/summary.csv
+
+What summary.csv records:
+- rows
+- empty
+- empty_rate
+- positive rows
+- positive rows with empty skills
+- positive empty rate
+- negative rows
+- negative rows with empty skills
+- negative empty rate
+- average number of skills per row
+
+Best observed setting by raw empty-rate in the stored summary:
+runs=9, temp=0.2, top_p=0.7
+
+Its values:
+- empty_rate: 0.148965
+- pos_empty_rate: 0.056096
+- neg_empty_rate: 0.281188
+- avg_skills: 2.686547
+
+Interpretive note:
+Increasing runs and using top_p = 0.7 generally produced fewer empty skill outputs and more average retained skills.
+
+14. GPT batch-assisted labeling utilities
+
+Files:
+- symbolic-moe/batch_create.py
+- symbolic-moe/batch_fetch.py
+
+Purpose:
+Use the OpenAI Batch API to:
+- generate skill tags
+- generate multi-label moderation labels
+- fetch outputs
+- convert them back into local JSONL artifacts
+
+What batch_create.py does:
+- reads a JSONL pool
+- builds one batch request file for skills
+- builds one batch request file for labels
+- uploads those files to OpenAI
+- creates batch jobs
+- logs batch IDs to batch_files/batch_ids.txt
+
+What batch_fetch.py does:
+- reads recorded batch IDs
+- checks completion status
+- downloads output and error files
+- extracts response text
+- parses skills and labels
+- writes:
+  - validation_pool_skills_gpt.jsonl
+  - validation_pool_multilabel_gpt.jsonl
+
+Batch-specific parsing detail:
+batch_fetch.py includes a RAW_TO_CANON alias map so near-synonyms like "insulting" or "sarcasm" can be mapped back into the canonical skill vocabulary.
+
+Model default in batch_create.py:
+gpt-5.1
+
+API endpoint used:
+/v1/responses via OpenAI batch jobs
+
+Credentials requirement:
+These scripts require OPENAI_API_KEY either in the environment or in symbolic-moe/.env.
+
+15. Additional baseline and calibration utilities
+
+DeBERTa baseline:
+symbolic-moe/deberta_predict.py
+
+What it does:
+- Runs a multi-label sequence classification baseline over the validation pool.
+- Uses labels: hate, offense, bully, threat.
+- Applies sigmoid scores.
+- Keeps labels above a threshold (default 0.8).
+- Writes scores, predicted labels, and a binary gold vector.
+
+Default DeBERTa model:
+microsoft/deberta-v3-base
+
+DeBERTa artifact directory:
+symbolic-moe/deberta/
+
+Observed files there:
+- evaluate_deberta.py
+- pilot_metrics.txt
+- pilot_predictions.jsonl
+- predictions_validation.jsonl
+- validation_metrics.txt
+
+Calibration-related scripts present in symbolic-moe:
+- calibrate_threshold.py
+- calibrate_post_level.py
+
+These indicate:
+The project has also explored post-processing calibration and threshold tuning beyond the main symbolic routing logic.
+
+16. File inventory by category
+
+Documentation and notes:
+- METHODOLOGY.md
+- README.md
+- UPDATE_REPORT.md
+- commands.md
+- commands.txt
+- ppt_notes.md
+
+Core code:
+- __init__.py
+- config.py
+- io_utils.py
+- model_utils.py
+- skill_parsing.py
+- skill_inference.py
+- build_profiles.py
+- route_and_predict.py
+- predict_post.py
+- evaluate_outputs.py
+
+OpenAI batch tooling:
+- batch_create.py
+- batch_fetch.py
+- batch_files/batch_ids.txt
+- batch_files/skills_requests.jsonl
+- batch_files/labels_requests.jsonl
+- batch_files/output_files/*
+- batch_files/error_files/*
+
+Calibration / debugging / auxiliary:
+- calibrate_threshold.py
+- calibrate_post_level.py
+- dump_routing_log.py
+- debug_routing.py
+- deberta_predict.py
+- run_skill_grid.sh
+
+Primary data and result artifacts:
+- profile_pool.jsonl
+- profile_pool_skills.jsonl
+- profiles.json
+- validation_pool.jsonl
+- validation_pool_skills.jsonl
+- validation_pool_outputs.jsonl
+- test_pool.jsonl
+- test_pool_skills.jsonl
+- test_pool_outputs.jsonl
+- predictions/*.jsonl
+- predictions_validation/*.jsonl
+- grid_runs/*
+- routing_log.jsonl
+- test600_metrics.txt
+- validation_metrics.txt
+- validation_metrics_skill_odds.txt
+
+Log files preserved in the folder:
+- build_profiles.log
+- build_profiles copy.log
+- profile_skill_inference.log
+- profile_skill_inference copy.log
+- val_skill_inference.log
+- val_skill_inference copy.log
+- test_skill_inference.log
+- skill_inference.log
+- route_and_predict.log
+- route_and_predict copy.log
+- route_and_predict_test.log
+- route_and_predict_val.log
+- grid.log
+
+Interpretive note:
+This folder is not just source code. It is an experiment workspace with code, saved artifacts, parameter sweeps, logs, and post-hoc metric snapshots all preserved together.
+
+17. Important implementation mismatches and caveats
+
+Mismatch 1:
+README.md describes alpha = 0.6 and a no-hard-cap routing interpretation, while route_and_predict.py currently uses ALPHA = 0.4 and positive-weight filtering.
+
+Mismatch 2:
+config.py sets TEST_SAMPLE = symbolic-moe/test_sample_skills.jsonl, but that file is not present in the current directory listing. route_and_predict.py therefore has a broken default input path unless an explicit --input is passed.
+
+Mismatch 3:
+predict_post.py is out of sync with skill_inference.py's annotate() signature and appears likely to fail without code adjustment.
+
+Mismatch 4:
+build_profiles.py defaults to validation_pool.jsonl, but the recorded command workflow uses profile_pool_skills.jsonl. Existing profiles.json reflects the larger profile pool.
+
+Meaning for writing:
+The project should be described as an actively iterated research pipeline with multiple versioned snapshots and some drift between documentation, defaults, and the actual experiment commands.
+
+18. What the project is strongest at describing in a thesis
+
+The project is especially well-suited to being described as:
+- A modular moderation system built from specialist experts.
+- A symbolic routing layer over generative expert models.
+- A hybrid pipeline combining LLM-based semantic tagging and learned routing profiles.
+- A practical research system with interpretable intermediate signals (skills, expert weights, routed predictions).
+- A system that supports multi-expert outputs rather than collapsing everything into one opaque answer.
+
+Strong writing angles:
+- Interpretability: skills and routed experts are inspectable.
+- Modularity: experts can be added, removed, or re-profiled.
+- Resource efficiency: one base model plus multiple adapters.
+- Error analysis: predictions, skill tags, and routing artifacts are all logged.
+- Experiment traceability: many intermediate JSONL and metric files are preserved.
+
+19. What the project is not
+
+It is not:
+- A single end-to-end jointly trained MoE transformer.
+- A classical sparse-gated neural MoE layer inside one model.
+- A pure classifier without generative components.
+- A fully finalized production API.
+
+It is:
+- An orchestration layer over multiple specialist adapters.
+- A symbolic routing system implemented at the application level.
+- A research prototype with substantial saved experiment state.
+
+20. One-sentence thesis-ready summary
+
+The symbolic-moe project is a moderation-focused symbolic mixture-of-experts pipeline that uses LLM-based skill inference to route social media posts to four specialized Llama 3.1 8B QLoRA experts (hate, offense, bullying, threat), producing interpretable multi-expert predictions supported by explicit skill tags, learned routing profiles, and preserved evaluation artifacts.
+
+21. Suggested citation-safe wording for limitations
+
+If you need a neutral limitations paragraph, this wording is accurate:
+
+"The symbolic-moe pipeline is a research-stage implementation with strong experimental coverage but some operational drift between code defaults, command scripts, and documentation snapshots. Several artifacts reflect different evaluation subsets and parameter settings, and some consumer-facing paths appear to require minor synchronization before they can be used as turnkey endpoints. Nevertheless, the core routing architecture, profile generation process, and expert-specific evaluation traces are fully represented in the repository."
+
+End of dossier.
