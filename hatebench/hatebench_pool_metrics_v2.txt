@@ -1,0 +1,15 @@
+Overall: 6545/7838 correct (0.8350 accuracy)
+Routing precision (top-1): 4197/7838 (0.5355)
+hatebench: 6545/7838 (0.8350)
+hatebench (top-1): 4197/7838 (0.5355)
+Binary mode: expert
+Binary expert: dynahate_hate
+Binary used: 7838, skipped: 0
+Binary precision (hate): 0.8683
+Binary recall (hate): 0.7602
+Binary F1 (hate): 0.8107
+Binary precision (not hate): 0.8123
+Binary recall (not hate): 0.8999
+Binary F1 (not hate): 0.8538
+Binary macro F1: 0.8323
+Binary confusion: TP=2768, FP=420, TN=3777, FN=873

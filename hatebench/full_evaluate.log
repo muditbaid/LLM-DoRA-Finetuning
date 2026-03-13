@@ -1,0 +1,17 @@
+nohup: ignoring input
+2026-03-12 11:14:51.212587: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2026-03-12 11:14:51.225944: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:477] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1773328491.243429 1116849 cuda_dnn.cc:8310] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1773328491.249423 1116849 cuda_blas.cc:1418] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+2026-03-12 11:14:51.268772: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+Skipping import of cpp extensions due to incompatible torch version 2.8.0+cu128 for torchao version 0.14.1             Please see https://github.com/pytorch/ao/issues/2919 for more info
+Overall: 6545/7838 correct (0.8350 accuracy)
+Routing precision (top-1): 4197/7838 (0.5355)
+Gold expert recall (top-1): 0/7838 (0.0000)
+Gold expert recall (top-2): 0/7838 (0.0000)
+Gold expert recall (top-3): 0/7838 (0.0000)
+Gold expert recall (top-4): 0/7838 (0.0000)
+hatebench: 6545/7838 (0.8350)
+hatebench (top-1): 4197/7838 (0.5355)

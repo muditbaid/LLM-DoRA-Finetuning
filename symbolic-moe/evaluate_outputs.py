@@ -108,6 +108,27 @@ def _sorted_expert_names(predictions: Any) -> List[str]:
     return [c["expert"] for c in candidates]
 
 
+def _safe_div(n: float, d: float) -> float:
+    return n / d if d else 0.0
+
+
+def _is_negative_label(label: str) -> bool:
+    return _base_label_if_negative(label) is not None
+
+
+def _expert_binary_labels(cfg) -> tuple[str, str]:
+    labels = [normalize_label(t, cfg.normalizer) for t in cfg.label_texts]
+    unique_labels = list(dict.fromkeys(labels))
+    if not unique_labels:
+        return "positive", "negative"
+
+    pos = next((l for l in unique_labels if not _is_negative_label(l)), unique_labels[0])
+    neg = next((l for l in unique_labels if _base_label_if_negative(l) == pos), None)
+    if neg is None:
+        neg = f"not_{pos}" if "_" in pos else f"not {pos}"
+    return pos, neg
+
+
 def record_correct(output_label: str, predictions: Any, dataset: str) -> bool:
     normalizer = _dataset_normalizer(dataset)
     gold = normalize_label(output_label or "", normalizer)
@@ -148,6 +169,8 @@ def main() -> None:
     topk_hits = defaultdict(int)  # k -> hits
     per_dataset_topk_hits = defaultdict(lambda: defaultdict(int))  # dataset -> (k -> hits)
     max_k_considered = 4
+    expert_cfg_by_name = {cfg.name: cfg for cfg in EXPERTS}
+    per_expert = defaultdict(lambda: {"correct": 0, "total": 0, "tp": 0, "fp": 0, "tn": 0, "fn": 0})
 
     for row in rows:
         output_label = row.get("output", "")
@@ -173,6 +196,36 @@ def main() -> None:
                 topk_hits[k] += int(hit)
                 per_dataset_topk_hits[dataset or "unknown"][k] += int(hit)
 
+        if isinstance(predictions, list):
+            for pred in predictions:
+                if not isinstance(pred, dict):
+                    continue
+                expert_name = pred.get("expert")
+                if not isinstance(expert_name, str):
+                    continue
+                cfg = expert_cfg_by_name.get(expert_name)
+                if cfg is None or cfg.dataset != dataset:
+                    continue
+
+                gold = normalize_label(output_label or "", cfg.normalizer)
+                pred_raw = pred.get("normalized_prediction") or pred.get("raw_prediction") or ""
+                pred_norm = normalize_label(str(pred_raw), cfg.normalizer)
+                stats = per_expert[expert_name]
+                stats["total"] += 1
+                stats["correct"] += int(pred_norm == gold)
+
+                pos_label, neg_label = _expert_binary_labels(cfg)
+                if gold not in {pos_label, neg_label} or pred_norm not in {pos_label, neg_label}:
+                    continue
+                if gold == pos_label and pred_norm == pos_label:
+                    stats["tp"] += 1
+                elif gold == neg_label and pred_norm == pos_label:
+                    stats["fp"] += 1
+                elif gold == neg_label and pred_norm == neg_label:
+                    stats["tn"] += 1
+                elif gold == pos_label and pred_norm == neg_label:
+                    stats["fn"] += 1
+
     accuracy = correct / total if total else 0.0
     top1_accuracy = top1_correct / total if total else 0.0
     lines = []
@@ -195,6 +248,36 @@ def main() -> None:
             denom = per_dataset_top1[ds]["total"]
             rate = hits / denom if denom else 0.0
             lines.append(f"{ds} (gold expert top-{k}): {hits}/{denom} ({rate:.4f})")
+
+    expert_f1s = []
+    total_tp = total_fp = total_fn = 0
+    for cfg in EXPERTS:
+        stats = per_expert.get(cfg.name)
+        if not stats or stats["total"] == 0:
+            continue
+        acc = _safe_div(stats["correct"], stats["total"])
+        precision = _safe_div(stats["tp"], stats["tp"] + stats["fp"])
+        recall = _safe_div(stats["tp"], stats["tp"] + stats["fn"])
+        f1 = _safe_div(2 * precision * recall, precision + recall)
+        expert_f1s.append(f1)
+        total_tp += stats["tp"]
+        total_fp += stats["fp"]
+        total_fn += stats["fn"]
+        lines.append(
+            f"{cfg.name} (expert): acc {stats['correct']}/{stats['total']} ({acc:.4f}), "
+            f"f1 {f1:.4f}"
+        )
+
+    if expert_f1s:
+        macro_f1 = _safe_div(sum(expert_f1s), len(expert_f1s))
+        micro_precision = _safe_div(total_tp, total_tp + total_fp)
+        micro_recall = _safe_div(total_tp, total_tp + total_fn)
+        micro_f1 = _safe_div(2 * micro_precision * micro_recall, micro_precision + micro_recall)
+        lines.append(f"Overall F1 (macro over experts): {macro_f1:.4f}")
+        lines.append(f"Overall F1 (micro over experts): {micro_f1:.4f}")
+    else:
+        lines.append("Overall F1 (macro over experts): N/A (no in-domain expert predictions)")
+        lines.append("Overall F1 (micro over experts): N/A (no in-domain expert predictions)")
     print("\n".join(lines))
 
     if args.metrics_out:

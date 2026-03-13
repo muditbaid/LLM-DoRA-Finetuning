@@ -1,0 +1,8 @@
+Overall: 6545/7838 correct (0.8350 accuracy)
+Routing precision (top-1): 4197/7838 (0.5355)
+Gold expert recall (top-1): 0/7838 (0.0000)
+Gold expert recall (top-2): 0/7838 (0.0000)
+Gold expert recall (top-3): 0/7838 (0.0000)
+Gold expert recall (top-4): 0/7838 (0.0000)
+hatebench: 6545/7838 (0.8350)
+hatebench (top-1): 4197/7838 (0.5355)

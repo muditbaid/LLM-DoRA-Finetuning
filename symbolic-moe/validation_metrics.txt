@@ -1,36 +1,26 @@
-Overall: 3297/3672 correct (0.8979 accuracy)
-Routing precision (top-1): 2091/3672 (0.5694)
-Gold expert recall (top-1): 1041/3672 (0.2835)
-Gold expert recall (top-2): 1871/3672 (0.5095)
-Gold expert recall (top-3): 2754/3672 (0.7500)
-Gold expert recall (top-4): 3567/3672 (0.9714)
+Overall Accuracy: 3297/3672 (0.8979)
+Overall F1 (macro over experts): 0.9192
+Overall F1 (micro over experts): 0.9300
 
-dynahate: 864/918 (0.9412)
-jigsaw_threat: 888/918 (0.9673)
-kaggle_cyberbullying: 863/918 (0.9401)
-tweeteval_offensive: 682/918 (0.7429)
+Label-wise Metrics
+dynahate [hate]: acc 0.9412, precision 0.9444, recall 0.9482, f1 0.9463
+jigsaw_threat [threat]: acc 0.9673, precision 0.9578, recall 0.9784, f1 0.9680
+kaggle_cyberbullying [bully]: acc 0.9401, precision 0.9390, recall 0.9891, f1 0.9634
+tweeteval_offensive [offensive]: acc 0.7429, precision 0.7781, recall 0.6797, f1 0.7256
 
-dynahate (top-1): 416/918 (0.4532)
-jigsaw_threat (top-1): 805/918 (0.8769)
-kaggle_cyberbullying (top-1): 411/918 (0.4477)
-tweeteval_offensive (top-1): 459/918 (0.5000)
+Confusion Counts
+dynahate [hate]: TP=476 FP=28 TN=388 FN=26
+jigsaw_threat [threat]: TP=454 FP=20 TN=434 FN=10
+kaggle_cyberbullying [bully]: TP=724 FP=47 TN=139 FN=8
+tweeteval_offensive [offensive]: TP=312 FP=89 TN=370 FN=147
 
-dynahate (gold expert top-1): 0/918 (0.0000)
-dynahate (gold expert top-2): 69/918 (0.0752)
-dynahate (gold expert top-3): 918/918 (1.0000)
-dynahate (gold expert top-4): 918/918 (1.0000)
-
-jigsaw_threat (gold expert top-1): 809/918 (0.8813)
-jigsaw_threat (gold expert top-2): 884/918 (0.9630)
-jigsaw_threat (gold expert top-3): 918/918 (1.0000)
-jigsaw_threat (gold expert top-4): 918/918 (1.0000)
-
-kaggle_cyberbullying (gold expert top-1): 232/918 (0.2527)
-kaggle_cyberbullying (gold expert top-2): 918/918 (1.0000)
-kaggle_cyberbullying (gold expert top-3): 918/918 (1.0000)
-kaggle_cyberbullying (gold expert top-4): 918/918 (1.0000)
-
-tweeteval_offensive (gold expert top-1): 0/918 (0.0000)
-tweeteval_offensive (gold expert top-2): 0/918 (0.0000)
-tweeteval_offensive (gold expert top-3): 0/918 (0.0000)
-tweeteval_offensive (gold expert top-4): 813/918 (0.8856)
+Routing Precision
+top-1 overall: 2091/3672 (0.5694)
+dynahate top-1: 416/918 (0.4532)
+jigsaw_threat top-1: 805/918 (0.8769)
+kaggle_cyberbullying top-1: 411/918 (0.4477)
+tweeteval_offensive top-1: 459/918 (0.5000)
+gold expert recall top-1: 1041/3672 (0.2835)
+gold expert recall top-2: 1871/3672 (0.5095)
+gold expert recall top-3: 2754/3672 (0.7500)
+gold expert recall top-4: 3567/3672 (0.9714)

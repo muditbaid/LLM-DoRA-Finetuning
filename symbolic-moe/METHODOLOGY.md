@@ -1,147 +1,123 @@
-# Moderation Ensemble Methodology
+# 3 Methodology
 
-This document summarizes how we (1) train and evaluate the individual “expert” adapters for hate/offense/bullying detection and (2) layer a Symbolic‑MoE–style routing pipeline on top so we can deliver consistent, multi-label moderation decisions at inference time.
+## 3.1 Methodological Overview
+Harmful-language detection in social media spans multiple related but non-identical phenomena, including hate speech, offensive language, cyberbullying, and threats. A single monolithic classifier can underperform when label definitions, prompt styles, and class boundaries differ across tasks. The methodology therefore adopts a symbolic mixture-of-experts design in which each expert model is specialized for one task while a symbolic routing layer decides which experts to activate per input.
 
----
+The pipeline operates in three stages. First, a symbolic skill inference module extracts a compact set of interpretable cues from each post. Second, an offline profiling stage estimates expert competence conditioned on those skills. Third, a router combines skill-conditioned evidence with expert prior competence to select one or more experts for prediction. The system is intentionally multi-expert and multi-label in output behavior: it returns all selected expert predictions with confidence scores, rather than collapsing them into a single aggregated label.
 
-## 1. Expert Adapters
+The primary methodological contribution of this work is a symbolic mixture-of-experts architecture that integrates interpretable skill extraction with expert model routing. Instead of relying on a single classifier, the system first infers a set of symbolic skills from each post and then uses these signals to dynamically select the most appropriate expert models. This design enables specialization across related harmful-language detection tasks while maintaining interpretability in the routing decisions.
 
-### 1.1 Datasets
+## 3.2 Task Formulation
 
-| Expert | Dataset | Labels | Notes |
-|--------|---------|--------|-------|
-| Hate/offense | HateXplain (`data/hatexplain_*.jsonl`) | `hatespeech`, `offensive`, `normal` | Balanced 3-class classification framed as single-label generation. |
-| Bullying | Kaggle Cyberbullying (`data/kaggle_cyberbullying_*.jsonl`) | `label: bully/not_bully`, `type: age/gender/ethnicity/religion/none` | Structured output string with high-level + subtype. |
-| Optional future experts | e.g., DynaHate, Dynabench toxicity, Dynaboard hate, etc. | Domain-specific binary labels | Plugs into the same interface later. |
+The goal of the system is to detect harmful language in social media posts across multiple related categories. Let 
+𝑥
+x denote an input social media post represented as raw text. The system maps each post to one or more harmful-language labels using a set of specialized expert models.
 
-Each dataset keeps validation splits so we can generate gold metrics and later build routing profiles.
+Input
+A single social media post 
+𝑥
+x, represented as unstructured text.
 
-### 1.2 Training
+Output
+A predicted label from a task-specific label space corresponding to the expert model activated by the routing system. The system may produce multiple expert predictions for the same post.
 
-We fine-tune QLoRA adapters on Meta Llama‑3.1‑8B-Instruct using the provided `examples/train_qlora/*.yaml` configs:
+Tasks
+The methodology addresses four related but distinct harmful-language detection tasks:
 
-1. `llama31_hatexplain_qlora_sft.yaml` → Hate/offense expert.
-2. `llama31_kaggle_cyberbullying_qlora_sft.yaml` → Bullying + subtype expert.
-3. Additional configs (e.g., `llama31_dynahate_qlora_sft.yaml`) follow the same recipe for future experts.
+Hate speech detection
 
-Key training details:
+Offensive language detection
 
-- LoRA rank/alpha tuned per task.
-- Chat template = Llama‑3 system/user/assistant format.
-- Supervised fine-tuning target is **exact label text** (“hatespeech”, “label: bully; type: age”, etc.).
-- Validation runs produce per-label F1/accuracy stored in each adapter directory (e.g., `saves/.../eval_metrics.json`).
+Cyberbullying detection
 
-### 1.3 Evaluation Scripts
+Threat detection
 
-For reproducible metrics we keep task-specific evaluation CLIs:
+Each task is associated with a dedicated expert model trained on a task-specific dataset. Because definitions and annotation schemes differ across datasets, the system uses a symbolic routing mechanism to dynamically select the most appropriate expert models for each input.
 
-- `scripts/eval_hatexplain_metrics.py` – single-label accuracy + macro-F1.
-- `scripts/eval_cyberbullying_metrics.py` – label accuracy, subtype accuracy, macro-F1, joint correctness.
-- `scripts/eval_dynahate_metrics.py` (and future ones) – shaped to each dataset’s schema.
+## 3.3 Datasets
+The implemented system uses four task-aligned datasets, each mapped to one expert:
 
-These scripts:
+1. DynaHate for hate vs. not-hate classification.
+2. TweetEval Offensive for offensive vs. not-offensive classification.
+3. Jigsaw Threat for threat vs. not-threat classification.
+4. Kaggle Cyberbullying for bully vs. not-bully classification, with subtype annotations (age, gender, ethnicity, religion, none).
 
-1. Rebuild the Llama‑3 chat prompt.
-2. Run deterministic generation (no sampling) so evaluation is stable.
-3. Parse outputs with regex to extract the label(s).
-4. Compare against gold labels to compute task metrics.
+All datasets are represented in instruction-style JSONL records with system, instruction, input, and output fields. For the first three tasks, outputs are binary textual labels. For cyberbullying, outputs follow a structured label format (`label: ...; type: ...`).
 
-Outputs (JSON + console) prove each adapter is trustworthy on its specialization before we attempt any ensemble.
+Dataset preprocessing follows the same conversion pattern across tasks: post text is kept unchanged as `input`, task-specific `system` and `instruction` prompts are added, the gold target label is normalized to the task output schema, and the final record is saved as instruction-style JSONL.
 
----
+For Jigsaw Threat, the threat subset is constructed as a balanced binary set by taking threat-positive posts and sampling an equal number of non-threat posts (1:1 class balance). This yields split-level balance in the current artifacts (train 1750/1750, validation 667/667, test 667/667).
 
-## 2. Symbolic-MoE Style Routing
+## 3.4 Expert Model Construction
+Each expert is instantiated as a LoRA adapter over a shared base language model, Meta-Llama-3.1-8B-Instruct. The active expert set comprises four adapters:
 
-We adopt the Symbolic Mixture-of-Experts idea (Chen et al., 2025) but tailor it to moderation. The
-`symbolic-moe/` folder mirrors the original codebase (keywords → profile → routing) while skipping aggregation:
+1. Hate expert (DynaHate).
+2. Offensive-language expert (TweetEval Offensive).
+3. Cyberbullying expert (Kaggle Cyberbullying).
+4. Threat expert (Jigsaw Threat).
 
-- `config.py`: expert definitions, label spaces, and paths.
-- `validation_pool.jsonl`: ≈2k tagged validation samples across hate/offense/bully/threat/no-label.
-- `build_profiles.py`: runs each expert on the validation pool and saves skill scores to `profiles.json`.
-- `route_and_predict.py`: routes samples (e.g., `test_sample.jsonl`) to experts using the learned profiles and emits **all** expert outputs instead of aggregating them.
-- `predictions/*.jsonl`: raw outputs from profiling for debugging.
+At inference time, the same base architecture is reused and expert-specific adapters are loaded for routed prediction. Expert outputs are normalized into task-specific canonical label spaces before evaluation.
 
-### 2.1 Skill/Keyword Extraction
+## 3.5 Fine-Tuning Procedure
+The fine-tuning method is supervised fine-tuning with QLoRA-style 4-bit quantization and LoRA adaptation. Verified common settings include:
 
-Purpose: infer which *types* of moderation labels might apply to a new post before running every expert.
+1. Base model: Meta-Llama-3.1-8B-Instruct.
+2. Quantization: 4-bit bitsandbytes.
+3. PEFT method: LoRA (rank 8, alpha 16, dropout 0.05).
+4. Training stage: supervised fine-tuning.
+5. Gradient checkpointing enabled.
+6. Three training epochs per expert.
 
-Implementation options:
+The chat template used for training is `llama3`. Training examples are instruction-following classification prompts whose target text is the exact label string expected for each task. Maximum sequence length is task-dependent in the recovered configuration: 1024 tokens for DynaHate/TweetEval/Jigsaw and 2048 tokens for Kaggle Cyberbullying.
 
-1. **Keyword LLM** – a lightweight instruction model (e.g., Qwen2.5‑7B-Instruct or Llama‑3.1‑8B) that, given the post, emits a short list of tags from our taxonomy (`["hate", "offense", "bully_age", ...]`). We prompt it 3‑5 times per example during profiling and keep tags that repeat for stability.
-2. **Heuristic/Classifier** – if we have pre-existing detectors for “slur present” or “mentions age”, we can treat those as skills directly.
+## 3.6 Symbolic Skill Inference
+Before routing, each post is processed by a symbolic skill inference module. The module uses a fixed skill vocabulary and prompts a keyword model to output skills only from that controlled vocabulary. Skill inference is stochastic and repeated: multiple sampled generations are produced per post, then only skills that satisfy a minimum vote threshold across runs are retained.
 
-### 2.2 Profiling Each Expert (Offline)
+In the validated workflow, the final settings are repeated sampling with temperature 0.7 and top-p 0.9, using three runs and minimum count two for retention. This consensus strategy reduces one-shot extraction variance and yields stable symbolic signals for downstream routing.
 
-Using a validation set large enough to cover every tag:
+## 3.7 Expert Profiling
+Expert profiling is performed offline on a profiled pool of labeled examples. For each expert, predictions are compared with gold labels after task-appropriate normalization. Skill-conditioned statistics are accumulated to estimate how reliable each expert is when particular symbolic skills are present.
 
-1. Tag each validation post with skills using the method above.
-2. Run **each** expert adapter once per post to get predictions.
-3. For every skill attached to a post, update the expert’s score: +1 if the expert got the gold label correct for its task, −1 otherwise.
-4. The result (persisted in `profiles.json`) is a dictionary per expert, e.g.:
-   ```json
-   {
-     "hate": 85,
-     "offense": 42,
-     "normal": 60,
-     "bully_age": -5,
-     "bully_gender": -12,
-     "...": 0
-   }
-   ```
-5. Also record a **global competency** (per-expert accuracy) to bias routing toward consistently reliable models.
+The resulting profile stores:
 
-### 2.3 Routing at Inference
+1. Per-skill correctness statistics.
+2. Per-skill normalized scores.
+3. Global expert accuracy terms used as priors.
 
-For a new post:
+These profiles provide the empirical basis for routing decisions and are computed before final validation/test inference.
 
-1. Run the keyword extractor to get its skill list `K_post`.
-2. For each expert `E_i`, compute a **local suitability** score by summing the expert’s profile entries for `K_post`.
-3. Multiply by the expert’s global competency (normalized) to get a relevance weight.
-4. Apply softmax (temperature ≈ 0.5) over weights and **threshold or sample** the top‑k experts.
-5. Run only the selected experts’ inference code (e.g., `score_labels_from_logits`).
+## 3.8 Routing Mechanism
+Routing computes an expert relevance score by combining a prior competence term with skill-conditioned evidence. For expert \(e\) and inferred skill set \(S\), the implemented scoring rule is:
 
-Routing outputs:
+\[
+\text{score}_e = \text{prior}_e + \sum_{s \in S} \text{odds}_{e,s}
+\]
 
-- A list of `(expert_name, selected_skills, probability distribution / logits)`.
-- Since we do **not** aggregate, `route_and_predict.py` simply surfaces every expert decision that passes the routing threshold (e.g., both “hate” and “bully_age” can appear for the same post).
+where both prior and skill terms are derived from Laplace-smoothed correctness statistics transformed to log-odds.
 
-### 2.4 Optional Aggregation (Future)
+Experts with positive scores are candidate experts. With non-empty skill evidence, experts are selected if their score exceeds a relative threshold \(\alpha\) of the best candidate score; if none satisfy the threshold, the top expert is selected as fallback. In the active configuration, \(\alpha = 0.4\). The routing design permits multi-expert activation, consistent with the system’s multi-label alerting objective.
 
-If we later decide to return a single final label/rationale, we can add Symbolic‑MoE’s aggregator step:
+## 3.9 End-to-End Pipeline
+Figure X.X illustrates the pipeline architecture. At runtime, processing follows:
 
-1. Build a synthetic aggregation benchmark (one correct + two incorrect CoTs) from validation data.
-2. Evaluate each expert in “judge” mode to see which synthesizes others best.
-3. For each task choose the best aggregator and use it to fuse the selected experts’ outputs.
+1. Input post ingestion.
+2. Symbolic skill inference.
+3. Expert selection via profile-based routing.
+4. Routed expert inference with confidence estimation.
+5. Multi-expert output assembly.
 
-For now we skip this and present multiple expert decisions explicitly.
+The final output is a structured set of per-expert predictions and confidence scores for the same post. No post-hoc aggregation into a single label is applied in the current methodology.
 
-### 2.5 Efficiency Considerations
+## 3.10 Evaluation Protocol
+Evaluation is performed on routed validation and test outputs. Each post may be routed to multiple experts based on the symbolic routing mechanism. To assess prediction correctness while accounting for multi-expert activation, evaluation follows a Top-2 expert rule.
 
-- **Batching:** we batch all posts routed to the same expert so that model only loads once per batch. This mirrors Symbolic‑MoE’s trick that lets them run up to 16 experts on a single GPU.
-- **Expert pruning:** during profiling we track how often each expert is selected; extremely low-frequency experts can be dropped or merged to lower latency.
-- **Calibration & weights:** we can optionally apply the calibration/weighting pipeline (`ensemble/run_ensemble_eval.py`) to keep probabilities comparable across experts before presenting them.
+For each post, experts are ranked by routing score. A prediction is considered correct if the gold normalized label is produced by any of the two highest-scoring routed experts.
 
----
+This criterion balances strict routing evaluation with the system’s multi-expert design, where multiple experts may reasonably respond to the same input. Top-2 evaluation is commonly used in multi-expert or retrieval-style systems to measure whether the correct specialist model is among the most relevant candidates.
 
-## 3. Putting It Together
+Reported metrics include overall accuracy and label-wise precision, recall, and F1 scores for each task. For the validation pool used in this methodology write-up, label-wise results are:
 
-1. Train QLoRA adapters per dataset (Sec. 1). Save their checkpoints + eval metrics.
-2. Run `ensemble/run_ensemble_eval.py` (once routing is ready) to gather logits, fit temperature scaling, tune thresholds, and collect masked metrics for transparency.
-3. Build expert profiles + keyword extractor as described in Sec. 2 (use `python -m symbolic-moe.build_profiles`).
-4. At inference time (`python -m symbolic-moe.route_and_predict` currently runs on `test_sample.jsonl`):
-   - Tag incoming post → skills.
-   - Route to relevant experts using profiles.
-   - Run selected experts and obtain calibrated probabilities / thresholds.
-   - Emit structured output such as:
-     ```json
-     {
-       "post": "...",
-       "alerts": [
-         {"expert": "hatexplain", "label": "hatespeech", "prob": 0.81, "threshold": 0.62},
-         {"expert": "kaggle_bully", "label": "bully_age", "prob": 0.77, "threshold": 0.55}
-       ]
-     }
-     ```
-5. (Optional) add an aggregator/judge if we ever want one consolidated answer instead of multiple expert alerts.
-
-This approach lets us keep each adapter specialized and trustworthy while still delivering richer moderation coverage—no multi-round discussions, no retraining, just smart routing on top of the experts we’ve already built.
+1. DynaHate (hate): accuracy 0.9412, precision 0.9444, recall 0.9482, F1 0.9463.
+2. Jigsaw Threat (threat): accuracy 0.9673, precision 0.9578, recall 0.9784, F1 0.9680.
+3. Kaggle Cyberbullying (bully): accuracy 0.9401, precision 0.9390, recall 0.9891, F1 0.9634.
+4. TweetEval Offensive (offensive): accuracy 0.7429, precision 0.7781, recall 0.6797, F1 0.7256.

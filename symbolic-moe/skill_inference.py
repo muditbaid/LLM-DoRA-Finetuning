@@ -6,15 +6,14 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
-import json
-import re
 from collections import Counter
 from pathlib import Path
-from typing import Iterable, List
+from typing import List
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from tqdm import tqdm
+from skill_parsing import parse_skills_from_text
 
 SYMBOLIC_ROOT = Path(__file__).resolve().parent
 
@@ -92,38 +91,7 @@ def load_model(use_quantization: bool = True):
 
 
 def parse_skills(text: str) -> List[str]:
-    match = re.search(r"Skills\s*:(.*)", text, flags=re.IGNORECASE)
-    if not match:
-        return []
-    remainder = match.group(1).strip()
-    if not remainder:
-        return []
-    if remainder.startswith("[") and remainder.endswith("]"):
-        try:
-            parsed = json.loads(remainder)
-        except json.JSONDecodeError:
-            return []
-        if not isinstance(parsed, list):
-            return []
-        skills = []
-        allowed = set(SKILL_VOCAB)
-        for item in parsed:
-            if not isinstance(item, str):
-                continue
-            skill = item.strip().lower().replace(" ", "_")
-            if skill in allowed:
-                skills.append(skill)
-        return list(dict.fromkeys(skills))
-    allowed = set(SKILL_VOCAB)
-    skills = []
-    for token in remainder.split(","):
-        skill = token.strip().lower().replace(" ", "_")
-        if not skill:
-            continue
-        if skill in allowed:
-            skills.append(skill)
-    # remove duplicates while preserving order
-    return list(dict.fromkeys(skills))
+    return parse_skills_from_text(text, SKILL_VOCAB)
 
 
 def annotate(model, tokenizer, post: str, runs: int, min_count: int, max_new_tokens: int):

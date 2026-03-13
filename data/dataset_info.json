@@ -8,8 +8,8 @@
   "alpaca_zh_demo": {
     "file_name": "alpaca_zh_demo.json"
   },
-  "hatexplain_train": {
-    "file_name": "hatexplain_train.jsonl",
+  "hatebench_train": {
+    "file_name": "hatebench_train.jsonl",
     "columns": {
       "prompt": "instruction",
       "query": "input",
@@ -17,8 +17,8 @@
       "system": "system"
     }
   },
-  "hatexplain_rationale_train": {
-    "file_name": "hatexplain_rationale_train.jsonl",
+  "hatebench_val": {
+    "file_name": "hatebench_val.jsonl",
     "columns": {
       "prompt": "instruction",
       "query": "input",
@@ -26,8 +26,8 @@
       "system": "system"
     }
   },
-  "hatexplain_validation": {
-    "file_name": "hatexplain_validation.jsonl",
+  "hatebench_test": {
+    "file_name": "hatebench_test.jsonl",
     "columns": {
       "prompt": "instruction",
       "query": "input",

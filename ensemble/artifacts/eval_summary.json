@@ -1,9 +1,0 @@
-{
-  "f1_micro_masked": 0.537270087124879,
-  "f1_macro_masked": 0.5036090267892328,
-  "hamming_loss_masked": 0.462729912875121,
-  "jaccard_samples_masked": 0.5146041666666666,
-  "f1_samples_masked": 0.57775,
-  "auprc_macro_masked": 0.36448946420221084,
-  "lrap_masked": 0.5534650297619043
-}

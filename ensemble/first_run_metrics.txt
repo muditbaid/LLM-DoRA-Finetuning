@@ -1,7 +1,0 @@
-f1_micro_masked: 0.5373
-f1_macro_masked: 0.5036
-hamming_loss_masked: 0.4627
-jaccard_samples_masked: 0.5146
-f1_samples_masked: 0.5777
-auprc_macro_masked: 0.3645
-lrap_masked: 0.5535
