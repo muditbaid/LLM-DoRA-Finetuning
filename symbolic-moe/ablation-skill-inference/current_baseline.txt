@@ -1,0 +1,15 @@
+Current Baseline Metrics (from existing validation_pool_skills.jsonl)
+
+pool_file: symbolic-moe/ablation-skill-inference/val_skill_inference_pool.jsonl
+source_skills_file: symbolic-moe/validation_pool_skills.jsonl
+inference_run: not executed
+bucket_strategy: 40 positive_empty_current + 40 positive_non_empty_current + 40 negative
+
+total_samples: 120
+non_empty_predicted_skills: 51 (42.5%)
+empty_predicted_skills: 69 (57.5%)
+
+by_bucket:
+- positive_empty_current: total=40, non_empty=0 (0.0%), empty=40 (100.0%)
+- positive_non_empty_current: total=40, non_empty=40 (100.0%), empty=0 (0.0%)
+- negative: total=40, non_empty=11 (27.5%), empty=29 (72.5%)

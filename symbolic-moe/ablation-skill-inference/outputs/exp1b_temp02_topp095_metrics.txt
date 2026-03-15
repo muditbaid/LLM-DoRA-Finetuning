@@ -1,0 +1,11 @@
+EXP-1B (temperature=0.2, top_p=0.95, do_sample=True, runs=1, voting disabled)
+bucket_strategy: 40 positive_empty_current + 40 positive_non_empty_current + 40 negative
+output_file: symbolic-moe/ablation-skill-inference/outputs/val_skill_inference_pool_skills_exp1b_temp02_topp095.jsonl
+total_posts: 120
+positive_posts: 80
+empty_rate_all: 0.1750
+empty_rate_positive: 0.0875
+empty_rate_negative: 0.3500
+avg_skills_per_post: 2.6083
+avg_skills_positive: 3.1375
+format_error_rate: 0.0000

@@ -25,13 +25,12 @@ python symbolic-moe/batch_fetch.py \
 nohup python symbolic-moe/skill_inference.py \
   --input symbolic-moe/profile_pool.jsonl \
   --output symbolic-moe/profile_pool_skills.jsonl \
-  --runs 3 --min-count 2 --max-new-tokens 64 \
+  --batch-size 16 --max-input-tokens 1536 --quantization 4bit \
   > profile_skill_inference.log 2>&1 &
 
 nohup python symbolic-moe/skill_inference.py \
   --input symbolic-moe/validation_pool.jsonl \
   --output symbolic-moe/validation_pool_skills.jsonl \
-  --runs 3 --min-count 2 --max-new-tokens 64 \
   > val_skill_inference.log 2>&1 &
 
 nohup python symbolic-moe/skill_inference.py \

@@ -88,19 +88,19 @@ def build_profiles(input_path: Path, limit: int | None = None) -> Dict[str, Dict
             norm_gold = normalize_label(gold_text, expert_cfg.normalizer)
             raw_skills = rec.get(SKILL_FIELD)
             mapped_skills = []
-            if isinstance(raw_skills, list) and raw_skills:
+            if isinstance(raw_skills, list):
                 mapped_skills = [
                     s.strip().lower()
                     for s in raw_skills
                     if s and s.strip().lower() in SKILL_VOCAB
                 ]
-            else:
-                mapped_skills.append(rec.get("label", "none"))
             mapped_skills = mapped_skills or ["none"]
 
             is_correct = int(norm_pred == norm_gold)
             total_correct += is_correct
             for skill in mapped_skills:
+                if skill == "none":
+                    continue
                 stats[skill]["total"] += 1
                 stats[skill]["correct"] += is_correct
                 skill_scores_raw[skill] += 1 if is_correct else -1

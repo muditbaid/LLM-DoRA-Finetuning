@@ -32,12 +32,11 @@ def parse_skills_from_text(
         for k, v in (raw_to_canon or {}).items()
     }
 
-    # Prefer parsing from an explicit Skills: line.
-    match = re.search(r"^\s*Skills\s*:\s*(.*)$", text, flags=re.IGNORECASE | re.MULTILINE)
-    if not match:
+    # Parse from an explicit Skills: line. If multiple lines exist, trust the last one.
+    matches = list(re.finditer(r"^\s*Skills\s*:\s*(.*)$", text, flags=re.IGNORECASE | re.MULTILINE))
+    if not matches:
         return []
-
-    remainder = match.group(1).strip()
+    remainder = matches[-1].group(1).strip()
     if not remainder or remainder.lower() in {"none", "[]"}:
         return []
 
@@ -64,12 +63,5 @@ def parse_skills_from_text(
         norm = alias_map.get(norm, norm)
         if norm in allowed_set:
             out.append(norm)
-
-    # Final fallback: if we still parsed nothing, scan full text for exact skills.
-    if not out:
-        normalized_text = re.sub(r"[^a-z0-9_\s]", " ", text.lower().replace(" ", "_"))
-        for skill in allowed:
-            if re.search(rf"\b{re.escape(skill)}\b", normalized_text):
-                out.append(skill)
 
     return list(dict.fromkeys(out))

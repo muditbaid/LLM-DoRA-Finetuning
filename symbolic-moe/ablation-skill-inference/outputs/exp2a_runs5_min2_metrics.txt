@@ -1,0 +1,12 @@
+EXP-2A Majority Voting Reintroduction
+config: temperature=0.2, top_p=0.95, do_sample=True, runs=5, min_count=2, backfill=none, quantization=8bit
+output_file: symbolic-moe/ablation-skill-inference/outputs/val_skill_inference_pool_skills_exp2a_runs5_min2.jsonl
+total_posts: 120
+positive_posts: 80
+negative_posts: 40
+empty_rate_all: 0.1750
+empty_rate_positive: 0.0875
+empty_rate_negative: 0.3500
+avg_skills_per_post: 2.8750
+avg_skills_positive: 3.4125
+format_error_rate: 0.0000

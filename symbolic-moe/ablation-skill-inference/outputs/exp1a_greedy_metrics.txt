@@ -1,0 +1,7 @@
+EXP-1A Greedy decoding (do_sample=False, temperature/top_p disabled, voting disabled)
+bucket_strategy: 40 positive_empty_current + 40 positive_non_empty_current + 40 negative
+output_file: symbolic-moe/ablation-skill-inference/outputs/val_skill_inference_pool_skills_exp1a_greedy.jsonl
+total_posts: 120
+positive_posts: 80
+empty_rate_positive: 0.0875 (8.75%)
+avg_skills_per_post: 2.6417
