@@ -1,0 +1,19 @@
+Accuracy: 0.7593 | Macro-F1: 0.7538 | Time: 48.33s
+               precision    recall  f1-score   support
+
+    offensive     0.6997    0.9085    0.7905       459
+not offensive     0.8696    0.6100    0.7170       459
+
+     accuracy                         0.7593       918
+    macro avg     0.7846    0.7593    0.7538       918
+ weighted avg     0.7846    0.7593    0.7538       918
+
+Accuracy: 0.8208 | Macro-F1: 0.8180 | Time: 25.38s
+               precision    recall  f1-score   support
+
+    offensive     0.7567    0.9458    0.8407       240
+not offensive     0.9278    0.6958    0.7952       240
+
+     accuracy                         0.8208       480
+    macro avg     0.8422    0.8208    0.8180       480
+ weighted avg     0.8422    0.8208    0.8180       480

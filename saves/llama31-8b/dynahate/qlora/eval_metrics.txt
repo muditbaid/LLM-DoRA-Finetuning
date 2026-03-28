@@ -1,0 +1,20 @@
+Accuracy: 0.9259 | Macro-F1: 0.9255 | Time: 217.68s
+              precision    recall  f1-score   support
+
+        hate     0.9228    0.9382    0.9304      2167
+    not hate     0.9294    0.9121    0.9206      1933
+
+    accuracy                         0.9259      4100
+   macro avg     0.9261    0.9251    0.9255      4100
+weighted avg     0.9259    0.9259    0.9258      4100
+
+dynahate_test
+Accuracy: 0.9153 | Macro-F1: 0.9142 | Time: 213.83s
+              precision    recall  f1-score   support
+
+        hate     0.9123    0.9361    0.9240      2268
+    not hate     0.9191    0.8898    0.9043      1852
+
+    accuracy                         0.9153      4120
+   macro avg     0.9157    0.9130    0.9142      4120
+weighted avg     0.9154    0.9153    0.9151      4120

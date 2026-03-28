@@ -13,7 +13,12 @@ KEYWORD_MODEL = BASE_MODEL
 
 SYMBOLIC_ROOT = Path(__file__).resolve().parent
 VALIDATION_POOL = SYMBOLIC_ROOT / "validation_pool.jsonl"
-TEST_SAMPLE = SYMBOLIC_ROOT / "test_sample_skills.jsonl"
+PROFILE_POOL = SYMBOLIC_ROOT / "profile_pool.jsonl"
+PROFILE_POOL_SKILLS = SYMBOLIC_ROOT / "profile_pool_skills.jsonl"
+VALIDATION_POOL_SKILLS = SYMBOLIC_ROOT / "validation_pool_skills.jsonl"
+TEST_POOL = SYMBOLIC_ROOT / "test_pool.jsonl"
+TEST_POOL_SKILLS = SYMBOLIC_ROOT / "test_pool_skills.jsonl"
+TEST_SAMPLE = TEST_POOL_SKILLS
 PROFILES_PATH = SYMBOLIC_ROOT / "profiles.json"
 
 SKILL_TAGS = ["hate", "offense", "bully", "threat", "none"]
@@ -45,21 +50,21 @@ EXPERTS: List[ExpertConfig] = [
         name="dynahate_hate",
         dataset="dynahate",
         label="hate",
-        adapter_path=Path("saves/llama31-8b/dynahate/qlora"),
+        adapter_path=SYMBOLIC_ROOT.parent / "saves/llama31-8b/dynahate/qlora",
         label_texts=["hate", "not hate"],
     ),
     ExpertConfig(
         name="tweeteval_offense",
         dataset="tweeteval_offensive",
         label="offense",
-        adapter_path=Path("saves/llama31-8b/tweeteval_offensive/qlora"),
+        adapter_path=SYMBOLIC_ROOT.parent / "saves/llama31-8b/tweeteval_offensive/qlora",
         label_texts=["offensive", "not offensive"],
     ),
     ExpertConfig(
         name="kaggle_bully",
         dataset="kaggle_cyberbullying",
         label="bully",
-        adapter_path=Path("saves/llama31-8b/kaggle_cyberbullying/qlora"),
+        adapter_path=SYMBOLIC_ROOT.parent / "saves/llama31-8b/kaggle_cyberbullying/qlora",
         label_texts=[
             "label: bully; type: age",
             "label: bully; type: gender",
@@ -75,7 +80,7 @@ EXPERTS: List[ExpertConfig] = [
         name="jigsaw_threat",
         dataset="jigsaw_threat",
         label="threat",
-        adapter_path=Path("saves/llama31-8b/jigsaw_threat/qlora"),
+        adapter_path=SYMBOLIC_ROOT.parent / "saves/llama31-8b/jigsaw_threat/qlora",
         label_texts=["threat", "not threat"],
     ),
 ]

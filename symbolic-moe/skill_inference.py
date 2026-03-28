@@ -14,7 +14,6 @@ from typing import List
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from tqdm import tqdm
-from skill_parsing import parse_skills_from_text
 
 SYMBOLIC_ROOT = Path(__file__).resolve().parent
 
@@ -33,11 +32,13 @@ def _load_module(path: Path, name: str):
 
 config_mod = _load_module(SYMBOLIC_ROOT / "config.py", "symbolic_moe_config_skill")
 io_mod = _load_module(SYMBOLIC_ROOT / "io_utils.py", "symbolic_moe_io_skill")
+skill_parsing_mod = _load_module(SYMBOLIC_ROOT / "skill_parsing.py", "symbolic_moe_skill_parsing")
 
 KEYWORD_MODEL = config_mod.KEYWORD_MODEL
 SKILL_VOCAB = config_mod.SKILL_VOCAB
 read_jsonl = io_mod.read_jsonl
 write_jsonl = io_mod.write_jsonl
+parse_skills_from_text = skill_parsing_mod.parse_skills_from_text
 
 SKILL_LIST_TEXT = "\n".join(SKILL_VOCAB) if SKILL_VOCAB else ""
 
@@ -108,6 +109,26 @@ def load_model(quantization: str = "4bit"):
 
 def parse_skills(text: str) -> List[str]:
     return parse_skills_from_text(text, SKILL_VOCAB)
+
+
+def annotate(
+    model,
+    tokenizer,
+    post: str,
+    runs: int,
+    min_count: int,
+    max_new_tokens: int,
+    max_input_tokens: int = 1536,
+):
+    return annotate_batch(
+        model=model,
+        tokenizer=tokenizer,
+        posts=[post],
+        runs=runs,
+        min_count=min_count,
+        max_new_tokens=max_new_tokens,
+        max_input_tokens=max_input_tokens,
+    )[0]
 
 
 def _is_oom_error(err: BaseException) -> bool:

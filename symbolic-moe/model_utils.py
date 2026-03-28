@@ -4,6 +4,7 @@ Model loading helpers for symbolic-moe experts.
 from __future__ import annotations
 
 import importlib.util
+from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -37,13 +38,12 @@ ExpertConfig = config_mod.ExpertConfig
 
 
 @dataclass
-class ExpertModel:
-    config: ExpertConfig
+class SharedModelRuntime:
     use_quantization: bool = True
 
     def __post_init__(self) -> None:
         self.tokenizer = AutoTokenizer.from_pretrained(
-            self.config.adapter_path,
+            BASE_MODEL,
             use_fast=True,
             trust_remote_code=True,
         )
@@ -67,12 +67,74 @@ class ExpertModel:
             trust_remote_code=True,
             quantization_config=q_config,
         )
-        self.model = PeftModel.from_pretrained(
-            self.model,
-            str(self.config.adapter_path),
-            is_trainable=False,
-        )
         self.model.eval()
+        self.loaded_adapters: set[str] = set()
+        self.active_adapter: Optional[str] = None
+
+    def ensure_adapter(self, config: ExpertConfig) -> None:
+        if config.name in self.loaded_adapters:
+            return
+
+        adapter_path = str(config.adapter_path)
+        if isinstance(self.model, PeftModel):
+            self.model.load_adapter(adapter_path, adapter_name=config.name, is_trainable=False)
+        else:
+            self.model = PeftModel.from_pretrained(
+                self.model,
+                adapter_path,
+                adapter_name=config.name,
+                is_trainable=False,
+            )
+        self.model.eval()
+
+        self.loaded_adapters.add(config.name)
+
+    def activate_adapter(self, adapter_name: str) -> None:
+        if adapter_name not in self.loaded_adapters:
+            raise ValueError(f"Adapter '{adapter_name}' is not loaded.")
+        if isinstance(self.model, PeftModel):
+            self.model.set_adapter(adapter_name)
+        self.active_adapter = adapter_name
+
+    def base_inference_context(self):
+        if isinstance(self.model, PeftModel):
+            return self.model.disable_adapter()
+        return nullcontext()
+
+    def close(self) -> None:
+        try:
+            del self.model
+        except AttributeError:
+            pass
+        torch.cuda.empty_cache()
+
+
+@dataclass
+class ExpertModel:
+    config: ExpertConfig
+    use_quantization: bool = True
+    runtime: Optional[SharedModelRuntime] = None
+
+    def __post_init__(self) -> None:
+        self._owns_runtime = False
+        if self.runtime is not None:
+            self.runtime.ensure_adapter(self.config)
+            self.runtime.activate_adapter(self.config.name)
+            self.tokenizer = self.runtime.tokenizer
+            self.model = self.runtime.model
+            return
+
+        runtime = SharedModelRuntime(use_quantization=self.use_quantization)
+        runtime.ensure_adapter(self.config)
+        runtime.activate_adapter(self.config.name)
+        self.runtime = runtime
+        self._owns_runtime = True
+        self.tokenizer = runtime.tokenizer
+        self.model = runtime.model
+
+    def _activate(self) -> None:
+        if self.runtime is not None:
+            self.runtime.activate_adapter(self.config.name)
 
     def build_prompt(self, system: str, instruction: str, user_input: str) -> str:
         messages = []
@@ -101,6 +163,7 @@ class ExpertModel:
         return prompt
 
     def predict(self, prompt: str) -> str:
+        self._activate()
         inputs = self.tokenizer(prompt, return_tensors="pt")
         input_ids = inputs["input_ids"].to(self.model.device)
         attention_mask = inputs.get("attention_mask")
@@ -123,6 +186,7 @@ class ExpertModel:
 
     def predict_with_confidence(self, prompt: str) -> tuple[str, float]:
         """Greedy label with log-prob scoring over configured label_texts."""
+        self._activate()
         inputs = self.tokenizer(prompt, return_tensors="pt")
         input_ids = inputs["input_ids"].to(self.model.device)
         attention_mask = inputs.get("attention_mask")
@@ -162,6 +226,11 @@ class ExpertModel:
         return best_label, best_prob
 
     def close(self) -> None:
+        if self.runtime is not None and not self._owns_runtime:
+            return
+        if self.runtime is not None and self._owns_runtime:
+            self.runtime.close()
+            return
         try:
             del self.model
         except AttributeError:
