@@ -1,9 +1,0 @@
-EXP-2B Temperature Sweep Metrics
-constant settings: top_p=0.95, runs=5, min_count=2, backfill=none, quantization=8bit
-note: temperature=0.0 is run with do_sample=False because sampling with temp=0 is invalid in transformers
-
-temp | sampling | empty_all | empty_pos | empty_neg | avg_skills | avg_skills_pos | format_err
-0.0 | False | 0.1750 | 0.0875 | 0.3500 | 2.6417 | 3.2375 | 0.0000
-0.2 | True | 0.1750 | 0.0875 | 0.3500 | 2.8333 | 3.4000 | 0.0000
-0.5 | True | 0.1667 | 0.0875 | 0.3250 | 2.9667 | 3.5375 | 0.0000
-0.7 | True | 0.1583 | 0.0875 | 0.3000 | 3.0667 | 3.6125 | 0.0000

@@ -11,11 +11,23 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import sys
 from collections import defaultdict
 from pathlib import Path
-from typing import List, Any
+from typing import Any, List
 
 SYMBOLIC_ROOT = Path(__file__).resolve().parent
+if str(SYMBOLIC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SYMBOLIC_ROOT))
+
+from langsmith_utils import (
+    LangSmithManager,
+    build_common_metadata,
+    default_dataset_name_for_split,
+    infer_split,
+    parse_tags,
+    sample_key_for_row,
+)
 
 
 def _load_module(path: Path, name: str):
@@ -86,6 +98,12 @@ def _select_top_prediction(predictions: Any) -> List[dict]:
     return [best]
 
 
+def _prediction_entries(predictions: Any) -> List[dict]:
+    if not isinstance(predictions, list):
+        return []
+    return [p for p in predictions if isinstance(p, dict)]
+
+
 def _gold_expert_for_dataset(dataset: str) -> str | None:
     """Map dataset name to its corresponding expert config name."""
     if not dataset:
@@ -112,8 +130,22 @@ def _safe_div(n: float, d: float) -> float:
     return n / d if d else 0.0
 
 
+def _routing_margin(predictions: Any) -> float | None:
+    candidates = _prediction_entries(predictions)
+    if len(candidates) < 2:
+        return None
+    if not all("weight" in candidate for candidate in candidates[:2]):
+        return None
+    ranked = sorted(candidates, key=lambda c: c.get("weight", float("-inf")), reverse=True)
+    return float(ranked[0].get("weight", 0.0) - ranked[1].get("weight", 0.0))
+
+
 def _is_negative_label(label: str) -> bool:
     return _base_label_if_negative(label) is not None
+
+
+def _prediction_polarity(prediction: str) -> str:
+    return "negative" if _is_negative_label(prediction) else "positive"
 
 
 def _expert_binary_labels(cfg) -> tuple[str, str]:
@@ -144,6 +176,40 @@ def record_correct(output_label: str, predictions: Any, dataset: str) -> bool:
     return False
 
 
+def evaluate_row(row: dict[str, Any], max_k_considered: int = 4) -> dict[str, Any]:
+    output_label = row.get("output", "")
+    predictions = row.get("predictions", [])
+    dataset = row.get("dataset", "")
+    ranked_experts = _sorted_expert_names(predictions)
+    gold_expert = _gold_expert_for_dataset(dataset)
+    top1_preds = _select_top_prediction(predictions)
+    prediction_entries = _prediction_entries(predictions)
+    normalized_predictions = _extract_predictions(predictions)
+    polarities = {_prediction_polarity(pred) for pred in normalized_predictions}
+
+    topk_hits = {
+        f"gold_expert_hit_at_{k}": bool(gold_expert and gold_expert in ranked_experts[:k])
+        for k in range(1, max_k_considered + 1)
+    }
+    routing_margin = _routing_margin(predictions)
+    selected_experts = [entry.get("expert") for entry in prediction_entries if isinstance(entry.get("expert"), str)]
+
+    return {
+        "permissive_correct": record_correct(output_label, predictions, dataset),
+        "top1_correct": record_correct(output_label, top1_preds, dataset),
+        "gold_expert": gold_expert,
+        "ranked_experts": ranked_experts,
+        "selected_experts": selected_experts,
+        "num_selected_experts": len(selected_experts),
+        "empty_skill_case": not bool(row.get("predicted_skills")),
+        "routing_margin": routing_margin,
+        "underrouted": bool(gold_expert and gold_expert not in selected_experts),
+        "expert_disagreement": len(polarities) > 1,
+        "cross_task_overlap": len(selected_experts) > 1,
+        **topk_hits,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate routed outputs against gold labels.")
     parser.add_argument(
@@ -158,9 +224,43 @@ def main() -> None:
         default=None,
         help="Optional path to save the printed metrics.",
     )
+    parser.add_argument(
+        "--langsmith-project",
+        type=str,
+        default=None,
+        help="Optional LangSmith project override for evaluation traces.",
+    )
+    parser.add_argument(
+        "--langsmith-tags",
+        type=str,
+        default="",
+        help="Optional comma-separated LangSmith tags.",
+    )
+    parser.add_argument(
+        "--langsmith-dataset-name",
+        type=str,
+        default=None,
+        help="Optional LangSmith dataset name used to attach reference example ids.",
+    )
     args = parser.parse_args()
 
     rows = read_jsonl(args.input)
+    split = infer_split(args.input)
+    ls_manager = LangSmithManager(
+        project_name=args.langsmith_project,
+        tags=[f"split:{split}", *parse_tags(args.langsmith_tags)],
+    )
+    ls_metadata = build_common_metadata(
+        split=split,
+        cwd=Path.cwd(),
+        extra={"evaluation_source": str(args.input)},
+    )
+    dataset_name = args.langsmith_dataset_name or default_dataset_name_for_split(split)
+    example_id_by_key = (
+        ls_manager.dataset_example_map(dataset_name=dataset_name)
+        if ls_manager.enabled and dataset_name
+        else {}
+    )
     total = len(rows)
     correct = 0
     top1_correct = 0
@@ -176,20 +276,21 @@ def main() -> None:
         output_label = row.get("output", "")
         predictions = row.get("predictions", [])
         dataset = row.get("dataset", "")
-        ok = record_correct(output_label, predictions, dataset)
+        row_eval = evaluate_row(row, max_k_considered=max_k_considered)
+        ok = row_eval["permissive_correct"]
         correct += int(ok)
         ds_stats = per_dataset[dataset or "unknown"]
         ds_stats["total"] += 1
         ds_stats["correct"] += int(ok)
         top1_preds = _select_top_prediction(predictions)
-        top1_ok = record_correct(output_label, top1_preds, dataset)
+        top1_ok = row_eval["top1_correct"]
         top1_correct += int(top1_ok)
         ds_top1 = per_dataset_top1[dataset or "unknown"]
         ds_top1["total"] += 1
         ds_top1["correct"] += int(top1_ok)
 
-        gold_expert = _gold_expert_for_dataset(dataset)
-        ranked_experts = _sorted_expert_names(predictions)
+        gold_expert = row_eval["gold_expert"]
+        ranked_experts = row_eval["ranked_experts"]
         if gold_expert and ranked_experts:
             for k in range(1, max_k_considered + 1):
                 hit = gold_expert in ranked_experts[:k]
@@ -225,6 +326,17 @@ def main() -> None:
                     stats["tn"] += 1
                 elif gold == pos_label and pred_norm == neg_label:
                     stats["fn"] += 1
+
+        if ls_manager.enabled:
+            ls_manager.record_evaluation_example(
+                row=row,
+                metadata={
+                    **ls_metadata,
+                    "dataset": dataset,
+                },
+                evaluation=row_eval,
+                reference_example_id=example_id_by_key.get(sample_key_for_row(row)),
+            )
 
     accuracy = correct / total if total else 0.0
     top1_accuracy = top1_correct / total if total else 0.0

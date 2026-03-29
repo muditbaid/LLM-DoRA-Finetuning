@@ -1,1 +1,0 @@
-Classify the following social media post. Return exactly one line in the format: label: bully|not_bully; type: <age|gender|ethnicity|religion|none>. Use lowercase exactly as shown. If the post is not bullying, set type to none. Do not include any extra words, explanations, or whitespace before or after the answer.
