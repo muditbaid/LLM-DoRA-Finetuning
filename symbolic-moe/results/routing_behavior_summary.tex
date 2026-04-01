@@ -1,0 +1,19 @@
+% Requires: \usepackage{booktabs}
+\begin{table}[t]
+\centering
+\caption{Routing behavior summary across baseline and Bernoulli settings. The selected-$k$ column records the explicit execution depth for NB runs; the baseline router uses a variable thresholded expert set rather than a fixed top-$k$ rule.}
+\begin{tabular}{llccccc}
+\toprule
+Setting & Split & Routing Top-1 & Gold@1 & Gold@2 & Gold@3 & Selected $k$ \\
+\midrule
+Baseline & Validation & 0.6353 & 0.3519 & 0.5076 & 0.7500 & -- \\
+NB Top-1 & Validation & 0.6816 & 0.4461 & 0.4461 & 0.4461 & 1 \\
+NB Top-2 & Validation & 0.6816 & 0.4461 & 0.7130 & 0.7130 & 2 \\
+NB Top-3 & Validation & 0.6816 & 0.4461 & 0.7130 & 0.8668 & 3 \\
+Baseline & Test & 0.6583 & 0.3531 & 0.5042 & 0.7500 & -- \\
+NB Top-1 & Test & 0.5708 & 0.3297 & 0.3297 & 0.3297 & 1 \\
+NB Top-2 & Test & 0.6698 & 0.4130 & 0.7177 & 0.7177 & 2 \\
+NB Top-3 & Test & 0.6698 & 0.4130 & 0.7177 & 0.8740 & 3 \\
+\bottomrule
+\end{tabular}
+\end{table}

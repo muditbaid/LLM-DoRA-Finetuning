@@ -1,0 +1,16 @@
+% Requires: \usepackage{booktabs}
+\begin{table*}[t]
+\centering
+\caption{Representative qualitative cases used to illustrate successful routing, routing drift, subtype loss, and empty-skill failure.}
+\begin{tabular}{lllll}
+\toprule
+Case Type & Dataset & Gold Label & Inferred Skills & Routed Experts / Main Observation \\
+\midrule
+Successful routing & DynaHate & hate & dehumanization, stereotype invocation, identity targeting & dynahate\_hate and kaggle\_bully; symbolic cues align with group-directed hate and route to plausible experts. \\
+Successful offensive case & TweetEval Offensive & offensive & non-targeted profanity & tweeteval\_offense and kaggle\_bully; sparse symbolic evidence still recovers the task-appropriate offensive expert. \\
+Routing-drift failure & DynaHate & hate & age-based bullying & tweeteval\_offense and jigsaw\_threat; a misleading skill assignment pushes ranking away from the hate expert. \\
+Subtype absorption failure & SOSNet Cyberbullying & bully (gender subtype) & dehumanization, coded hostility & dynahate\_hate and tweeteval\_offense; broad hostility cues absorb subtype-bearing bullying into more general experts. \\
+Empty-skill failure & DynaHate & hate & none retained & tweeteval\_offense and jigsaw\_threat; without retained symbolic cues, routing loses direct evidence for the gold expert. \\
+\bottomrule
+\end{tabular}
+\end{table*}

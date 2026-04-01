@@ -1,0 +1,44 @@
+2026-03-16 19:59:59.254706: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2026-03-16 19:59:59.267482: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:477] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1773705599.283254 2645642 cuda_dnn.cc:8310] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1773705599.288558 2645642 cuda_blas.cc:1418] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+2026-03-16 19:59:59.306024: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+Skipping import of cpp extensions due to incompatible torch version 2.8.0+cu128 for torchao version 0.14.1             Please see https://github.com/pytorch/ao/issues/2919 for more info
+Overall: 1632/1920 correct (0.8500 accuracy)
+Routing precision (top-1): 1264/1920 (0.6583)
+Gold expert recall (top-1): 678/1920 (0.3531)
+Gold expert recall (top-2): 968/1920 (0.5042)
+Gold expert recall (top-3): 1440/1920 (0.7500)
+Gold expert recall (top-4): 1692/1920 (0.8812)
+dynahate: 434/480 (0.9042)
+jigsaw_threat: 462/480 (0.9625)
+kaggle_cyberbullying: 447/480 (0.9313)
+tweeteval_offensive: 289/480 (0.6021)
+dynahate (top-1): 226/480 (0.4708)
+jigsaw_threat (top-1): 404/480 (0.8417)
+kaggle_cyberbullying (top-1): 394/480 (0.8208)
+tweeteval_offensive (top-1): 240/480 (0.5000)
+dynahate (gold expert top-1): 0/480 (0.0000)
+dynahate (gold expert top-2): 9/480 (0.0187)
+dynahate (gold expert top-3): 480/480 (1.0000)
+dynahate (gold expert top-4): 480/480 (1.0000)
+jigsaw_threat (gold expert top-1): 353/480 (0.7354)
+jigsaw_threat (gold expert top-2): 479/480 (0.9979)
+jigsaw_threat (gold expert top-3): 480/480 (1.0000)
+jigsaw_threat (gold expert top-4): 480/480 (1.0000)
+kaggle_cyberbullying (gold expert top-1): 325/480 (0.6771)
+kaggle_cyberbullying (gold expert top-2): 480/480 (1.0000)
+kaggle_cyberbullying (gold expert top-3): 480/480 (1.0000)
+kaggle_cyberbullying (gold expert top-4): 480/480 (1.0000)
+tweeteval_offensive (gold expert top-1): 0/480 (0.0000)
+tweeteval_offensive (gold expert top-2): 0/480 (0.0000)
+tweeteval_offensive (gold expert top-3): 0/480 (0.0000)
+tweeteval_offensive (gold expert top-4): 252/480 (0.5250)
+dynahate_hate (expert): acc 434/480 (0.9042), f1 0.9109
+tweeteval_offense (expert): acc 222/252 (0.8810), f1 0.8052
+kaggle_bully (expert): acc 447/480 (0.9313), f1 0.9573
+jigsaw_threat (expert): acc 462/480 (0.9625), f1 0.9609
+Overall F1 (macro over experts): 0.9086
+Overall F1 (micro over experts): 0.9333

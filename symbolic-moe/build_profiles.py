@@ -38,7 +38,7 @@ EXPERTS = config_mod.EXPERTS
 PROFILES_PATH = config_mod.PROFILES_PATH
 SKILL_FIELD = config_mod.SKILL_FIELD
 SKILL_VOCAB = config_mod.SKILL_VOCAB
-VALIDATION_POOL = config_mod.VALIDATION_POOL
+DEFAULT_PROFILE_INPUT = getattr(config_mod, "PROFILE_POOL_SKILLS", config_mod.VALIDATION_POOL)
 read_jsonl = io_mod.read_jsonl
 write_jsonl = io_mod.write_jsonl
 ExpertModel = model_mod.ExpertModel
@@ -174,8 +174,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--input",
         type=Path,
-        default=VALIDATION_POOL,
-        help="Validation pool JSONL.",
+        default=DEFAULT_PROFILE_INPUT,
+        help="Profile pool JSONL with inferred skills.",
     )
     parser.add_argument(
         "--limit",

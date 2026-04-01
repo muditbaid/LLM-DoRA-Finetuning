@@ -1,0 +1,28 @@
+Baseline file: symbolic-moe/test_pool_outputs.jsonl
+Compare file: symbolic-moe/test_pool_outputs_skill_nb_top2.jsonl
+Low-margin threshold: 0.25
+
+Failure Summary
+- cross_task_overlap: 1920
+- gold_expert_miss_at_1: 1242
+- gold_expert_miss_at_2: 952
+- expert_disagreement: 734
+- top1_incorrect: 656
+- empty_skill_case: 644
+- permissive_incorrect: 288
+- low_margin: 225
+
+Per-Dataset Summary
+- dynahate: {'rows': 480, 'empty_skill_case': 109, 'top1_incorrect': 254, 'gold_expert_miss_at_1': 480, 'gold_expert_miss_at_2': 471, 'cross_task_overlap': 480, 'expert_disagreement': 218, 'permissive_incorrect': 46, 'low_margin': 32}
+- jigsaw_threat: {'rows': 480, 'empty_skill_case': 212, 'expert_disagreement': 252, 'cross_task_overlap': 480, 'permissive_incorrect': 18, 'top1_incorrect': 76, 'low_margin': 88, 'gold_expert_miss_at_1': 127, 'gold_expert_miss_at_2': 1}
+- kaggle_cyberbullying: {'rows': 480, 'empty_skill_case': 115, 'gold_expert_miss_at_1': 155, 'expert_disagreement': 85, 'cross_task_overlap': 480, 'top1_incorrect': 86, 'permissive_incorrect': 33, 'low_margin': 34}
+- tweeteval_offensive: {'rows': 480, 'top1_incorrect': 240, 'gold_expert_miss_at_1': 480, 'gold_expert_miss_at_2': 480, 'cross_task_overlap': 480, 'permissive_incorrect': 191, 'empty_skill_case': 208, 'expert_disagreement': 179, 'low_margin': 71}
+
+Baseline vs Compare
+- rows: 1920
+- both_correct: 1448
+- both_incorrect: 174
+- bernoulli_improves: 114
+- bernoulli_regresses: 184
+- baseline_only: 0
+- compare_only: 0

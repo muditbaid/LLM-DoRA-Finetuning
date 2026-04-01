@@ -57,6 +57,7 @@ known-third-party = [
     "accelerate",
     "datasets",
     "gradio",
+    "langsmith",
     "numpy",
     "peft",
     "torch",

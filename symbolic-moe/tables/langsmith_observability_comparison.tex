@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lcc}
+\hline
+Measure (100 traced validation samples) & Baseline `profile\_logodds` & Bernoulli `skill\_nb` top-2 \\
+\hline
+End-to-end accuracy & 0.82 & 0.81 \\
+Top-1 routing precision & 0.68 & 0.60 \\
+Gold expert recall@2 & 0.50 & 0.68 \\
+Average selected experts per post & 3.34 & 2.00 \\
+Minimum selected experts per post & 3 & 2 \\
+Maximum selected experts per post & 4 & 2 \\
+Empty-skill cases in traced sample & 29 & 29 \\
+\hline
+\end{tabular}
+\caption{Observability-oriented comparison of two traced routing configurations on the same 100 validation samples. The Bernoulli router keeps end-to-end accuracy close to the additive baseline while substantially reducing expert fan-out and improving gold-expert recall at top-2.}
+\label{tab:langsmith_observability_comparison}
+\end{table}

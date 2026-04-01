@@ -1,0 +1,18 @@
+% Requires: \usepackage{booktabs}
+
+\begin{table}[htbp]
+\centering
+\caption{Dataset-Specific Training Settings}
+\label{tab:dataset-specific-training-settings}
+\small
+\begin{tabular}{p{3.2cm} r c c c}
+\toprule
+Expert & Batch size & Learning rate & Max sequence length & Warmup ratio \\
+\midrule
+Hate Expert & 4 & 2.0e-5 & 2048 & 0.05 \\
+Offense Expert & 4 & 2.0e-5 & 2048 & 0.05 \\
+Bully Expert & 4 & 2.0e-5 & 2048 & 0.05 \\
+Threat Expert & 4 & 2.0e-5 & 2048 & 0.05 \\
+\bottomrule
+\end{tabular}
+\end{table}

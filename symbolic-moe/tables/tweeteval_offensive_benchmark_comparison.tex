@@ -1,0 +1,21 @@
+% Requires: \usepackage{booktabs}
+
+\begin{table}[htbp]
+\centering
+\caption{Comparison on TweetEval-Offensive. Prior baseline scores are reported from Barbieri et al.\ (2020), Loureiro et al.\ (2022), and Zampieri et al.\ (2019); the Offense Expert score was obtained in local evaluation for comparison.}
+\label{tab:tweeteval-offensive-benchmark-comparison}
+\small
+\begin{tabular}{p{8.2cm} r p{2.0cm}}
+\toprule
+Model & Macro-F1 & Setting \\
+\midrule
+Offense Expert & 0.828 & Fine-tuned \\
+TimeLM-21 (RoBERTa, Twitter-retrained; Loureiro et al., 2022) & 0.822 & Fine-tuned \\
+RoBERTa-Retrained (Twitter; Barbieri et al., 2020) & 0.816 & Fine-tuned \\
+Ensemble (CNN + BLSTM + BGRU; Zampieri et al., 2019) & 0.807 & Supervised \\
+fastText (Barbieri et al., 2020) & 0.734 & Supervised \\
+BLSTM (Barbieri et al., 2020) & 0.717 & Supervised \\
+SVM (Barbieri et al., 2020) & 0.523 & Supervised \\
+\bottomrule
+\end{tabular}
+\end{table}

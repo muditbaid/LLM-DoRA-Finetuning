@@ -1,0 +1,27 @@
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{p{0.28\linewidth} p{0.26\linewidth} p{0.30\linewidth}}
+\hline
+Review trigger & Trace evidence & Analytical purpose \\
+\hline
+Empty-skill case &
+No retained skills after repeated skill inference &
+Identifies posts for which the symbolic vocabulary may be incomplete or the skill detector may be too conservative. \\
+Low-margin routing &
+Small score gap between the top-ranked and next-ranked experts &
+Marks posts where expert assignment is unstable and routing decisions should be inspected qualitatively. \\
+Incorrect output &
+Permissive correctness or top-1 correctness is false &
+Supports direct inspection of whether failure arose from skill inference, routing, or expert prediction. \\
+Gold expert missed &
+Gold expert is absent from routed experts &
+Highlights under-routing errors and makes expert recall failures visible at the sample level. \\
+Cross-task overlap &
+Multiple routed experts produce positive outcomes in different task label spaces &
+Surfaces ambiguous or multi-faceted posts that may require closer qualitative interpretation. \\
+\hline
+\end{tabular}
+\caption{Review-queue rules used with LangSmith traces to prioritize hard cases for manual inspection.}
+\label{tab:langsmith_review_rules}
+\end{table}

@@ -1,0 +1,14 @@
+Empty-skill analysis for profile_pool_skills.jsonl
+
+Overall rows: 14000
+Empty rows: 4341 (0.3101)
+
+Per-dataset summary:
+- DynaHate: empty 751/3500 (0.2146) | empty positive rate 0.2636 | nonempty positive rate 0.6275
+- TweetEval Offensive: empty 1292/3500 (0.3691) | empty positive rate 0.2570 | nonempty positive rate 0.6590
+- SOSNet Cyberbullying: empty 821/3500 (0.2346) | empty positive rate 0.3971 | nonempty positive rate 0.9261
+- Jigsaw Threat: empty 1477/3500 (0.4220) | empty positive rate 0.1361 | nonempty positive rate 0.7657
+
+Group-level text-feature summary:
+- empty: n=4341 | positive_rate=0.2435 | very_short_rate=0.1578 | mention_rate=0.3550 | hashtag_rate=0.0841 | url_rate=0.0362 | non_ascii_rate=0.1299 | profanity_rate=0.0251 | quote_rate=0.3227 | avg_words=24.02
+- nonempty: n=9659 | positive_rate=0.7465 | very_short_rate=0.0855 | mention_rate=0.3042 | hashtag_rate=0.0659 | url_rate=0.0189 | non_ascii_rate=0.1296 | profanity_rate=0.1370 | quote_rate=0.3928 | avg_words=27.15

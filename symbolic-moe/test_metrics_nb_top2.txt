@@ -1,0 +1,36 @@
+Overall: 1562/1920 correct (0.8135 accuracy)
+Routing precision (top-1): 1286/1920 (0.6698)
+Gold expert recall (top-1): 793/1920 (0.4130)
+Gold expert recall (top-2): 1378/1920 (0.7177)
+Gold expert recall (top-3): 1378/1920 (0.7177)
+Gold expert recall (top-4): 1378/1920 (0.7177)
+dynahate: 384/480 (0.8000)
+jigsaw_threat: 443/480 (0.9229)
+kaggle_cyberbullying: 381/480 (0.7937)
+tweeteval_offensive: 354/480 (0.7375)
+dynahate (top-1): 334/480 (0.6958)
+jigsaw_threat (top-1): 406/480 (0.8458)
+kaggle_cyberbullying (top-1): 256/480 (0.5333)
+tweeteval_offensive (top-1): 290/480 (0.6042)
+dynahate (gold expert top-1): 169/480 (0.3521)
+dynahate (gold expert top-2): 268/480 (0.5583)
+dynahate (gold expert top-3): 268/480 (0.5583)
+dynahate (gold expert top-4): 268/480 (0.5583)
+jigsaw_threat (gold expert top-1): 369/480 (0.7688)
+jigsaw_threat (gold expert top-2): 418/480 (0.8708)
+jigsaw_threat (gold expert top-3): 418/480 (0.8708)
+jigsaw_threat (gold expert top-4): 418/480 (0.8708)
+kaggle_cyberbullying (gold expert top-1): 164/480 (0.3417)
+kaggle_cyberbullying (gold expert top-2): 301/480 (0.6271)
+kaggle_cyberbullying (gold expert top-3): 301/480 (0.6271)
+kaggle_cyberbullying (gold expert top-4): 301/480 (0.6271)
+tweeteval_offensive (gold expert top-1): 91/480 (0.1896)
+tweeteval_offensive (gold expert top-2): 391/480 (0.8146)
+tweeteval_offensive (gold expert top-3): 391/480 (0.8146)
+tweeteval_offensive (gold expert top-4): 391/480 (0.8146)
+dynahate_hate (expert): acc 239/268 (0.8918), f1 0.9239
+tweeteval_offense (expert): acc 333/391 (0.8517), f1 0.8324
+kaggle_bully (expert): acc 294/301 (0.9767), f1 0.9878
+jigsaw_threat (expert): acc 404/418 (0.9665), f1 0.9663
+Overall F1 (macro over experts): 0.9276
+Overall F1 (micro over experts): 0.9371

@@ -1,0 +1,32 @@
+% Requires: \usepackage{booktabs}
+
+\begin{table}[htbp]
+\centering
+\caption{Shared Training Hyperparameters}
+\label{tab:shared-training-hyperparameters}
+\small
+\begin{tabular}{p{5.2cm} p{7.2cm}}
+\toprule
+Parameter & Value \\
+\midrule
+Base model & Meta-Llama-3.1-8B-Instruct \\
+Fine-tuning method & QLoRA \\
+LoRA rank & 8 \\
+LoRA alpha & 16 \\
+LoRA dropout & 0.05 \\
+Quantization & 4-bit bitsandbytes (bnb) \\
+Training stage & Supervised fine-tuning (SFT) \\
+Optimizer & paged\_adamw\_32bit \\
+Learning-rate scheduler & cosine \\
+Number of epochs & 3 \\
+Per-device train batch size & 4 \\
+Learning rate & 2.0e-5 \\
+Maximum sequence length & 2048 \\
+Warmup ratio & 0.05 \\
+Gradient accumulation steps & 8 \\
+Gradient checkpointing & enabled \\
+Template & llama3 \\
+Precision & bf16 \\
+\bottomrule
+\end{tabular}
+\end{table}

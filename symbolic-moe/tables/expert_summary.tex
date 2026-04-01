@@ -1,0 +1,18 @@
+% Requires: \usepackage{booktabs}
+
+\begin{table}[htbp]
+\centering
+\caption{Expert Summary}
+\label{tab:expert-summary}
+\small
+\begin{tabular}{p{2.4cm} p{2.8cm} p{3.1cm} p{2.0cm} p{3.1cm}}
+\toprule
+Expert name & Dataset & Model & Adapter & Output label \\
+\midrule
+Hate Expert & DynaHate & Meta-Llama-3.1-8B-Instruct & QLoRA & hate / not hate \\
+Offense Expert & TweetEval Offensive & Meta-Llama-3.1-8B-Instruct & QLoRA & offensive / not offensive \\
+Bully Expert & SOSNet Cyberbullying & Meta-Llama-3.1-8B-Instruct & QLoRA & bully / not bully \\
+Threat Expert & Jigsaw Threat & Meta-Llama-3.1-8B-Instruct & QLoRA & threat / not threat \\
+\bottomrule
+\end{tabular}
+\end{table}

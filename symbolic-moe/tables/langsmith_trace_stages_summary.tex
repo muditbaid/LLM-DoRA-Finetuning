@@ -1,0 +1,24 @@
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{p{0.17\linewidth} p{0.29\linewidth} p{0.42\linewidth}}
+\hline
+Stage & Recorded fields & Analytical use \\
+\hline
+Skill inference &
+Post text; repeated keyword-model responses; retained skills; rejected skills; vote counts; empty-skill flag &
+Shows whether the symbolic skill layer is stable across repeated runs and whether important skills were dropped before routing. \\
+Router scoring &
+Full expert score table; ranked experts; selected experts; routing margin; selection policy &
+Shows whether the router is broad or selective and whether the selected experts are well separated from the discarded ones. \\
+Expert inference &
+Expert name; task label space; routed weight; full expert prompt; raw prediction; normalized prediction; confidence; latency &
+Allows separation of routing errors from expert-model errors and exposes the exact input each fine-tuned expert received. \\
+Evaluation &
+Permissive correctness; top-1 correctness; gold-expert hit@k; routing margin; disagreement and overlap flags &
+Supports sample-level error analysis and enables hard-case review queues rather than relying only on aggregate metrics. \\
+\hline
+\end{tabular}
+\caption{LangSmith trace stages used in the symbolic mixture-of-experts pipeline and the main analytical value of each stage.}
+\label{tab:langsmith_trace_stages}
+\end{table}

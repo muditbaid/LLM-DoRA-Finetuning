@@ -1,0 +1,5 @@
+dataset,dataset_display,n_rows,empty_rows,nonempty_rows,empty_rate,empty_positive,empty_negative,nonempty_positive,nonempty_negative,empty_positive_rate,nonempty_positive_rate
+dynahate,DynaHate,3500,751,2749,0.21457142857142858,198,553,1725,1024,0.2636484687083888,0.6275009094216079
+tweeteval_offensive,TweetEval Offensive,3500,1292,2208,0.36914285714285716,332,960,1455,753,0.25696594427244585,0.6589673913043478
+kaggle_cyberbullying,SOSNet Cyberbullying,3500,821,2679,0.23457142857142857,326,495,2481,198,0.39707673568818513,0.9260918253079508
+jigsaw_threat,Jigsaw Threat,3500,1477,2023,0.422,201,1276,1549,474,0.13608666215301288,0.7656945130993574

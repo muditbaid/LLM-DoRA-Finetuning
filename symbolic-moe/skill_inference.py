@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import gc
 import importlib.util
+import sys
 from collections import Counter
 from pathlib import Path
 from typing import List
@@ -14,9 +15,20 @@ from typing import List
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from tqdm import tqdm
-from skill_parsing import parse_skills_from_text
 
 SYMBOLIC_ROOT = Path(__file__).resolve().parent
+if str(SYMBOLIC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SYMBOLIC_ROOT))
+
+from langsmith_utils import (
+    LangSmithManager,
+    build_common_metadata,
+    default_dataset_name_for_split,
+    infer_split,
+    parse_tags,
+    sample_key_for_row,
+)
+from skill_parsing import parse_skills_from_text
 
 
 def _load_module(path: Path, name: str):
@@ -183,11 +195,13 @@ def annotate_batch(
     outputs = []
     for counter, responses in zip(counters, responses_by_post):
         confident = [skill for skill, count in counter.items() if count >= min_count]
+        rejected = [skill for skill, count in counter.items() if count < min_count]
         outputs.append(
             {
                 "predicted_skills": confident,
                 "keyword_responses": responses,
                 "skill_vote_counts": dict(counter),
+                "unselected_skills": rejected,
             }
         )
     return outputs
@@ -265,9 +279,51 @@ def main():
         choices=("4bit", "8bit", "none"),
         help="Model loading precision mode.",
     )
+    parser.add_argument(
+        "--langsmith-project",
+        type=str,
+        default=None,
+        help="Optional LangSmith project override for tracing skill inference.",
+    )
+    parser.add_argument(
+        "--langsmith-tags",
+        type=str,
+        default="",
+        help="Optional comma-separated LangSmith tags.",
+    )
+    parser.add_argument(
+        "--langsmith-dataset-name",
+        type=str,
+        default=None,
+        help="Optional LangSmith dataset name used to attach reference example ids.",
+    )
     args = parser.parse_args()
 
     samples = read_jsonl(args.input)
+    split = infer_split(args.input)
+    ls_manager = LangSmithManager(
+        project_name=args.langsmith_project,
+        tags=["stage:skill_inference", f"split:{split}", *parse_tags(args.langsmith_tags)],
+    )
+    ls_metadata = build_common_metadata(
+        skills_path=config_mod.SKILL_FILE,
+        split=split,
+        cwd=Path.cwd(),
+        extra={
+            "keyword_model": KEYWORD_MODEL,
+            "runs": args.runs,
+            "min_count": args.min_count,
+            "max_input_tokens": args.max_input_tokens,
+            "max_new_tokens": args.max_new_tokens,
+            "quantization": args.quantization,
+        },
+    )
+    dataset_name = args.langsmith_dataset_name or default_dataset_name_for_split(split)
+    example_id_by_key = (
+        ls_manager.dataset_example_map(dataset_name=dataset_name)
+        if ls_manager.enabled and dataset_name
+        else {}
+    )
     model, tokenizer = load_model(args.quantization)
     annotated = []
     for start in tqdm(range(0, len(samples), args.batch_size), desc="Inferring skills"):
@@ -286,6 +342,16 @@ def main():
             new_row = dict(rec)
             new_row.update(annotation)
             annotated.append(new_row)
+            if ls_manager.enabled:
+                ls_manager.record_skill_example(
+                    row=rec,
+                    annotation=annotation,
+                    metadata={
+                        **ls_metadata,
+                        "dataset": rec.get("dataset"),
+                    },
+                    reference_example_id=example_id_by_key.get(sample_key_for_row(rec)),
+                )
 
     write_jsonl(args.output, annotated)
     print(f"[symbolic-moe] Wrote {len(annotated)} annotated rows to {args.output}")

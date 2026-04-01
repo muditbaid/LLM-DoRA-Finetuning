@@ -1,0 +1,318 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.16)  16 MAR 2026 15:39
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**skill_vocabulary_preview.tex
+(./skill_vocabulary_preview.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+(/home/mb05005/.TinyTeX/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+(/home/mb05005/.TinyTeX/texmf-dist/tex/latex/base/size12.clo
+File: size12.clo 2025/01/22 v1.4n Standard LaTeX file (size option)
+)
+\c@part=\count275
+\c@section=\count276
+\c@subsection=\count277
+\c@subsubsection=\count278
+\c@paragraph=\count279
+\c@subparagraph=\count280
+\c@figure=\count281
+\c@table=\count282
+\abovecaptionskip=\skip49
+\belowcaptionskip=\skip50
+\bibindent=\dimen148
+) (/home/mb05005/.TinyTeX/texmf-dist/tex/latex/geometry/geometry.sty
+Package: geometry 2026/03/07 v6.0 Page Geometry
+ (/home/mb05005/.TinyTeX/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
+\KV@toks@=\toks17
+) (/home/mb05005/.TinyTeX/texmf-dist/tex/generic/iftex/ifvtex.sty
+Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
+ (/home/mb05005/.TinyTeX/texmf-dist/tex/generic/iftex/iftex.sty
+Package: iftex 2024/12/12 v1.0g TeX engine tests
+))
+\Gm@cnth=\count283
+\Gm@cntv=\count284
+\c@Gm@tempcnt=\count285
+\Gm@bindingoffset=\dimen149
+\Gm@wd@mp=\dimen150
+\Gm@odd@mp=\dimen151
+\Gm@even@mp=\dimen152
+\Gm@layoutwidth=\dimen153
+\Gm@layoutheight=\dimen154
+\Gm@layouthoffset=\dimen155
+\Gm@layoutvoffset=\dimen156
+\Gm@dimlist=\toks18
+) (/home/mb05005/.TinyTeX/texmf-dist/tex/latex/booktabs/booktabs.sty
+Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
+\heavyrulewidth=\dimen157
+\lightrulewidth=\dimen158
+\cmidrulewidth=\dimen159
+\belowrulesep=\dimen160
+\belowbottomsep=\dimen161
+\aboverulesep=\dimen162
+\abovetopsep=\dimen163
+\cmidrulesep=\dimen164
+\cmidrulekern=\dimen165
+\defaultaddspace=\dimen166
+\@cmidla=\count286
+\@cmidlb=\count287
+\@aboverulesep=\dimen167
+\@belowrulesep=\dimen168
+\@thisruleclass=\count288
+\@lastruleclass=\count289
+\@thisrulewidth=\dimen169
+) (/home/mb05005/.TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
+File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
+\l__color_backend_stack_int=\count290
+)
+No file skill_vocabulary_preview.aux.
+\openout1 = `skill_vocabulary_preview.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+*geometry* driver: auto-detecting
+*geometry* detected driver: pdftex
+*geometry* verbose mode - [ preamble ] result:
+* driver: pdftex
+* paper: <default>
+* layout: <same size as paper>
+* layoutoffset:(h,v)=(0.0pt,0.0pt)
+* modes: 
+* h-part:(L,W,R)=(50.58878pt, 513.11745pt, 50.58878pt)
+* v-part:(T,H,B)=(50.58878pt, 693.79243pt, 50.58878pt)
+* \paperwidth=614.295pt
+* \paperheight=794.96999pt
+* \textwidth=513.11745pt
+* \textheight=693.79243pt
+* \oddsidemargin=-21.68121pt
+* \evensidemargin=-21.68121pt
+* \topmargin=-58.68121pt
+* \headheight=12.0pt
+* \headsep=25.0pt
+* \topskip=12.0pt
+* \footskip=30.0pt
+* \marginparwidth=44.0pt
+* \marginparsep=10.0pt
+* \columnsep=10.0pt
+* \skip\footins=10.8pt plus 4.0pt minus 2.0pt
+* \hoffset=0.0pt
+* \voffset=0.0pt
+* \mag=1000
+* \@twocolumnfalse
+* \@twosidefalse
+* \@mparswitchfalse
+* \@reversemarginfalse
+* (1in=72.27pt=25.4mm, 1cm=28.453pt)
+
+(/home/mb05005/mudit/llama_dora/LLaMA-Factory/symbolic-moe/tables/visuals/../skill_vocabulary.tex
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <10.95> on input line 8.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 8.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 8.
+
+Underfull \hbox (badness 10000) in paragraph at lines 10--10
+[]\OT1/cmr/m/n/10.95 Typical tex-tual
+ []
+
+
+Underfull \hbox (badness 2245) in paragraph at lines 10--11
+[]\OT1/cmr/m/n/10.95 Related ex-
+ []
+
+
+Overfull \hbox (16.50848pt too wide) in paragraph at lines 12--12
+[]\OT1/cmtt/m/n/10.95 identity[]targeting| 
+ []
+
+
+Underfull \hbox (badness 5924) in paragraph at lines 13--13
+[]\OT1/cmr/m/n/10.95 Language that de-nies
+ []
+
+
+Underfull \hbox (badness 1917) in paragraph at lines 13--13
+\OT1/cmr/m/n/10.95 hu-man-ity or com-pares
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 13--14
+[]\OT1/cmr/m/n/10.95 Hate, Of-
+ []
+
+
+Overfull \hbox (33.75455pt too wide) in paragraph at lines 14--14
+[]\OT1/cmtt/m/n/10.95 stereotype[]invocation| 
+ []
+
+
+Underfull \hbox (badness 1603) in paragraph at lines 14--14
+[]\OT1/cmr/m/n/10.95 Invocation of a broad
+ []
+
+
+Underfull \hbox (badness 5939) in paragraph at lines 14--14
+\OT1/cmr/m/n/10.95 neg-a-tive gen-er-al-iza-tion
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 15--16
+[]\OT1/cmr/m/n/10.95 Hate,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 15--16
+\OT1/cmr/m/n/10.95 Of-fense,
+ []
+
+
+Overfull \hbox (37.8936pt too wide) in paragraph at lines 16--16
+[]\OT1/cmtt/m/n/10.95 non[]targeted[]profanity| 
+ []
+
+
+Underfull \hbox (badness 3354) in paragraph at lines 16--16
+[]\OT1/cmr/m/n/10.95 Profanity or vul-gar-ity
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 16--17
+[]\OT1/cmr/m/n/10.95 Offense,
+ []
+
+
+Underfull \hbox (badness 2635) in paragraph at lines 17--17
+[]\OT1/cmr/m/n/10.95 Direct abu-sive or de-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 17--17
+[]\OT1/cmr/m/n/10.95 ``idiot,'' ``mo-ron,''
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 17--18
+[]\OT1/cmr/m/n/10.95 Hate, Of-
+ []
+
+
+Overfull \hbox (28.00586pt too wide) in paragraph at lines 18--18
+[]\OT1/cmtt/m/n/10.95 threatening[]language| 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 18--18
+[]\OT1/cmr/m/n/10.95 Explicit or im-plied
+ []
+
+
+Underfull \hbox (badness 3780) in paragraph at lines 18--18
+\OT1/cmr/m/n/10.95 co-er-cion, or in-tim-i-da-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 18--19
+[]\OT1/cmr/m/n/10.95 Threat,
+ []
+
+
+Overfull \hbox (43.64229pt too wide) in paragraph at lines 19--19
+[]\OT1/cmtt/m/n/10.95 identity[]based[]bullying| 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 19--19
+[]\OT1/cmr/m/n/10.95 Harassment di-rected
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 19--19
+[]\OT1/cmr/m/n/10.95 mocking some-one for
+ []
+
+
+Overfull \hbox (55.13966pt too wide) in paragraph at lines 20--20
+[]\OT1/cmtt/m/n/10.95 appearance[]based[]bullying| 
+ []
+
+
+Underfull \hbox (badness 4739) in paragraph at lines 20--20
+\OT1/cmr/m/n/10.95 ap-pear-ance, body, or
+ []
+
+
+Overfull \hbox (14.89885pt too wide) in paragraph at lines 21--21
+[]\OT1/cmtt/m/n/10.95 age[]based[]bullying| 
+ []
+
+
+Underfull \hbox (badness 2707) in paragraph at lines 21--21
+\OT1/cmr/m/n/10.95 age-related char-ac-ter-is-
+ []
+
+
+Overfull \hbox (10.7598pt too wide) in paragraph at lines 22--22
+[]\OT1/cmtt/m/n/10.95 sexual[]harassment| 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 22--22
+[]\OT1/cmr/m/n/10.95 Unwanted sex-u-al-ized
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 22--22
+\OT1/cmr/m/n/10.95 abuse, ob-jec-ti-fi-ca-tion,
+ []
+
+
+Underfull \hbox (badness 5231) in paragraph at lines 22--22
+[]\OT1/cmr/m/n/10.95 explicit sex-ual in-sults
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 22--23
+[]\OT1/cmr/m/n/10.95 Bully, Of-
+ []
+
+) [1{/home/mb05005/.TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] (/home/mb05005/mudit/llama_dora/LLaMA-Factory/symbolic-moe/tables/visuals/skill_vocabulary_preview.aux)
+ ***********
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+ ***********
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+ ) 
+Here is how much of TeX's memory you used:
+ 1136 strings out of 469515
+ 19706 string characters out of 5469681
+ 448756 words of memory out of 5000000
+ 29839 multiletter control sequences out of 15000+600000
+ 630926 words of font info for 51 fonts, out of 8000000 for 9000
+ 14 hyphenation exceptions out of 8191
+ 57i,11n,65p,271b,307s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</home/mb05005/.TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></home/mb05005/.TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></home/mb05005/.TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
+Output written on /home/mb05005/mudit/llama_dora/LLaMA-Factory/symbolic-moe/tables/visuals/skill_vocabulary_preview.pdf (1 page, 46238 bytes).
+PDF statistics:
+ 23 PDF objects out of 1000 (max. 8388607)
+ 13 compressed objects within 1 object stream
+ 0 named destinations out of 1000 (max. 500000)
+ 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+

@@ -1,0 +1,19 @@
+% Requires: \usepackage{booktabs}
+\begin{table}[t]
+\centering
+\caption{Per-dataset routed performance under baseline and Bernoulli routing. Delta columns show the change relative to the baseline and make clear where NB improves and where it degrades.}
+\begin{tabular}{llccccc}
+\toprule
+Dataset & Split & Baseline & NB Top-2 & $\Delta$ Top-2 & NB Top-3 & $\Delta$ Top-3 \\
+\midrule
+DynaHate & Validation & 0.9412 & 0.8333 & -0.1079 & 0.9096 & -0.0316 \\
+Jigsaw Threat & Validation & 0.9619 & 0.8725 & -0.0894 & 0.8889 & -0.0730 \\
+SOSNet Cyberbullying & Validation & 0.9401 & 0.7800 & -0.1601 & 0.8410 & -0.0991 \\
+TweetEval Offensive & Validation & 0.5893 & 0.7266 & +0.1373 & 0.7941 & +0.2048 \\
+DynaHate & Test & 0.9042 & 0.8000 & -0.1042 & 0.8792 & -0.0250 \\
+Jigsaw Threat & Test & 0.9625 & 0.9229 & -0.0396 & 0.9250 & -0.0375 \\
+SOSNet Cyberbullying & Test & 0.9313 & 0.7937 & -0.1376 & 0.8562 & -0.0751 \\
+TweetEval Offensive & Test & 0.6021 & 0.7375 & +0.1354 & 0.8125 & +0.2104 \\
+\bottomrule
+\end{tabular}
+\end{table}

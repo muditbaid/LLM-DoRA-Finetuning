@@ -1,0 +1,83 @@
+DATASET: DynaHate
+EMPTY COUNT: 178
+POSITIVE EXAMPLES:
+- val_dynahate_0020 | hate | What frustrates me the most is that I have autism and other mental issues. I worked for years to get to the point now where my mental health is mostly under control. I know how to socialise and I know how to attract women, but I still don't want anything to do
+- val_dynahate_0057 | hate | If gender and sex aren't real then how can you be born in the wrong one?
+- val_dynahate_0059 | hate | wommmmmmmennnnnn r tr rr rr rr r ass ss hhhh h
+- val_dynahate_0075 | hate | International pronouns day is a real thing? Oh Yikes.
+- val_dynahate_0096 | hate | All I want to do is sit here playing games while my woman is out there cooking and cleaning.
+- val_dynahate_0145 | hate | maternity leave should be banned
+- val_dynahate_0149 | hate | Not all gay people are the same. Some of them actually seem to be normal
+- val_dynahate_0166 | hate | It is not skin colour that makes people think that black skin is dangerous. It is your smart brain generalising danger in certain locations with those people based on what they look like and it's proven by humans to succeed.
+NEGATIVE EXAMPLES:
+- val_dynahate_0004 | not hate | if there is so much tourists hate about the United States then why do they even bother coming here in the first place?
+- val_dynahate_0011 | not hate | goat shepherding desert people are really tough and hardy, just go out to the sandlands and you'll see
+- val_dynahate_0023 | not hate | Famous gay penguin couple at Australian zoo adopts another chick
+- val_dynahate_0024 | not hate | a question to everyone, what are the questions you have in mind about the Syrian refugees in Europe and Turkey?
+- val_dynahate_0026 | not hate | My family is Eastern Orthodox. I have five daughters. One of the middle ones when she was six or thereabouts was really worried about something. So she told me "I'm just really stressed about finding a good husband." I said Don't worry, we'll find a good Ortho
+- val_dynahate_0041 | not hate | 'License to live': the state of Florida quietly changed driver's license requirements for immigrants and now  Tens of thousands of undocumented immigrants who have been able to drive legally in Florida may be unable to get driver licenses again after the state
+- val_dynahate_0063 | not hate | Go back to your kitchen and show them how it's done, chef!
+- val_dynahate_0065 | not hate | I really believe that "Love is a grave mental disease..." Plato It might be an overstatement, but there is truth here. What about women falling in love with unpleasant, or even dangerous, men? Just asking.
+
+DATASET: TweetEval Offensive
+EMPTY COUNT: 347
+POSITIVE EXAMPLES:
+- val_tweeteval_offensive_0005 | offensive | @user LOL you escaped some shit then... even if I don't regret watching it for a minute. #LoyalWolf
+- val_tweeteval_offensive_0009 | offensive | @user @user @user He is a wonder dog he could have a couple doggie girlfriends
+- val_tweeteval_offensive_0027 | offensive | . she. is the most powerful woman on this earth oh my fucking god
+- val_tweeteval_offensive_0034 | offensive | @user Can we talk about how he is having the worst year of any player in yankee history?
+- val_tweeteval_offensive_0037 | offensive | -found out there's more gun control you can't do mass murder in schools or theatres on Oct 21 has anyone done this joke yet
+- val_tweeteval_offensive_0040 | offensive | @user @user Took the words out of my mouth. He is just horrible.
+- val_tweeteval_offensive_0058 | offensive | @user Are you an ostrich?
+- val_tweeteval_offensive_0068 | offensive | @user you never were a slave. Spartacus was a slave and a heroic figure. You are neither.
+NEGATIVE EXAMPLES:
+- val_tweeteval_offensive_0002 | not offensive | @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @user @u
+- val_tweeteval_offensive_0008 | not offensive | @user @user And she is Canadian 🇨🇦
+- val_tweeteval_offensive_0015 | not offensive | @user + constantly reminded of how blessed she is.
+- val_tweeteval_offensive_0020 | not offensive | @user Confirm Kavanaugh Now!  #MAGA
+- val_tweeteval_offensive_0021 | not offensive | @user @user @user @user Where is your source for that?
+- val_tweeteval_offensive_0029 | not offensive | @user please can I print out the great poster you designed for #JusticeForOliver I have a stall at @user event for this purpose. I was going to do one myself but you are much better at techno😁 @user
+- val_tweeteval_offensive_0030 | not offensive | @user Good!!! MAGA
+- val_tweeteval_offensive_0033 | not offensive | @user @user @user @user Seriously 😂 no word of a lie though I am all done with live feeds after she is evicted. I cannot handle another second of all the other houseguests
+
+DATASET: SOSNet Cyberbullying
+EMPTY COUNT: 238
+POSITIVE EXAMPLES:
+- val_kaggle_cyberbullying_0006 | label: bully; type: religion | Good “christian” woman right here
+- val_kaggle_cyberbullying_0010 | label: bully; type: religion | Right??? My favs are; Love You to Death (first one I ever heard), Wolf Moon, their cover of Santana's stuff, Christian Woman (b/c I love me some blasphemy), and their "Banned version" cover of Summer Breeze. I really dig almost all, but those are my go-to's
+- val_kaggle_cyberbullying_0014 | label: bully; type: gender | @avacadosoup ...unless you learn propaganda.
+- val_kaggle_cyberbullying_0041 | label: bully; type: age | girls who bullied me in high school are watercolor paints now and im milk
+- val_kaggle_cyberbullying_0050 | label: bully; type: age | The girls who bullied me in high school giving a persuasive speech in English class:
+- val_kaggle_cyberbullying_0053 | label: bully; type: age | + and how they’re “fruitcakes” and a terrible slur jungkook used to be called in middle school by bullies. he prefers to stay with his hyungs, any one of them. but most of all he prefers to sleep at taehyung’s and jimin’s apartment and of course they’re his fa
+- val_kaggle_cyberbullying_0054 | label: bully; type: age | The girl who bullied you in high school but now wants to sell you Arbonne
+- val_kaggle_cyberbullying_0056 | label: bully; type: age | I would get introuble in middle school for bullying the bully, b/c i didn’t like them bullying people. It made sense to me
+NEGATIVE EXAMPLES:
+- val_kaggle_cyberbullying_0001 | label: not_bully; type: none | @DacieImapinkbee okay byebye! :-)))
+- val_kaggle_cyberbullying_0002 | label: not_bully; type: none | @g56yu What is that?
+- val_kaggle_cyberbullying_0019 | label: not_bully; type: none | @_sortOfGrown precious u at me lol.
+- val_kaggle_cyberbullying_0026 | label: not_bully; type: none | Mama dukes is the best
+- val_kaggle_cyberbullying_0029 | label: not_bully; type: none | Want to play marbles, kids? Go see Annie and Lloyd. #mkr
+- val_kaggle_cyberbullying_0036 | label: not_bully; type: none | How being bullied can damage your confidence http://dld.bz/5U8W
+- val_kaggle_cyberbullying_0042 | label: not_bully; type: none | RT @colonelkickhead: "Tonight all your favourites are back"....do you mean favourites to rag on because then yes, all my favourites are bac…
+- val_kaggle_cyberbullying_0047 | label: not_bully; type: none | Bully taking my tracks out & I'm fallin to sleep
+
+DATASET: Jigsaw Threat
+EMPTY COUNT: 427
+POSITIVE EXAMPLES:
+- val_jigsaw_threat_0005 | threat | hopefully one of these guys can shoot the 3 well and be a slasher to the rim.
+- val_jigsaw_threat_0011 | threat | Burn, baby, burn!
+- val_jigsaw_threat_0016 | threat | violent offenders need to be removed from the population. simple as that.
+- val_jigsaw_threat_0017 | threat | Too bad they can't shoot one off and have it land on Gardner..
+- val_jigsaw_threat_0034 | threat | he needed shot a long time ago.
+- val_jigsaw_threat_0035 | threat | Killing terrorists before they kill us is a valid foreign policy.
+- val_jigsaw_threat_0113 | threat | I hope the lack of full financial planning gives the Trump administrstion the ammo it needs to cancel the FFG, as Cayetano/Princess asked him to do. I hope that huge funding gap will bring reality back into focus. We can talk about the fiasco in terms we can a
+- val_jigsaw_threat_0173 | threat | So let's just throw the baby out with the bath water. Sig Hiel!
+NEGATIVE EXAMPLES:
+- val_jigsaw_threat_0001 | not threat | You will need WP:RS sources that directly relate the OT and NT issues before it can be used. The web link is neither RS nor relevant.
+- val_jigsaw_threat_0008 | not threat | IMDb never actually stated Tammy Windsor and Karyn Kupcinet were the same person. Strangely enough, they were two separate entries that didn't connect one to the other and at some point, they were merged. My guess is someone emailed IMDb and claimed they were 
+- val_jigsaw_threat_0012 | not threat | FDevelopment%5FAlternative College_of_Development_Alternative]   * Columbia_Journal_Review   * Combine_Honnete_Ober_Advancer_Mercantiles   * Commensals   * Completely_Me   * Computational_Engineering
+- val_jigsaw_threat_0021 | not threat | He can't grow a moutache
+- val_jigsaw_threat_0022 | not threat | ..... I agree this should be added.  Would be cool to see.   (talk) 2:10, 26 November 2014 (UTC)
+- val_jigsaw_threat_0028 | not threat | REDIRECT Talk:Demographic history of the Vilnius region
+- val_jigsaw_threat_0029 | not threat | Bitte dieses Substub-Vandalieren in der de:Wikipedia einstellen, die meisten Leute wissen, dass es die en:Wikipedia gibt.
+- val_jigsaw_threat_0033 | not threat | , 10 October 2005 (UTC)    :Thanks for getting those done Martyman. I forgot to ask you to do them. I'll roll the template out to the other cities shortly. |  09:20

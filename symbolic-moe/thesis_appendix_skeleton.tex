@@ -1,0 +1,84 @@
+% UGA 2025-compliant appendix skeleton for this project.
+%
+% Important:
+% 1. The 2025 UGA style guide places appendices AFTER the bibliography.
+% 2. The public UGA template repository currently shows appendices before
+%    the bibliography. Do not keep that order if you are targeting the
+%    current style guide.
+%
+% Put this content near the end of your main thesis file, after the final
+% chapter content. Adapt paths to match your thesis repository structure.
+
+% ----------------------- BIBLIOGRAPHY -----------------------
+\clearpage
+\addcontentsline{toc}{chapter}{Bibliography}
+\printbibliography[title={Bibliography}]
+
+% ------------------------- APPENDICES -----------------------
+\begin{appendices}
+
+\chapter{Full Prompts and Output Contracts}
+\label{app:prompts}
+% Suggested contents:
+% - expert task prompts for hate / offense / threat / cyberbullying
+% - current symbolic skill-inference prompt
+% - pilot batch prompts, if discussed in the thesis
+%
+% Example:
+% \input{appendix/prompts}
+
+\chapter{Label Spaces, Normalization Rules, and Evaluation Semantics}
+\label{app:labels}
+% Suggested contents:
+% - all task label spaces
+% - bully subtype normalization
+% - evaluator correctness rules
+%
+% Example:
+% \input{appendix/labels}
+
+\chapter{Supplementary Configuration Details}
+\label{app:configs}
+% Suggested contents:
+% - dataset-specific batch size, LR, sequence length
+% - skill-inference runtime defaults
+% - software versions
+% - optional note if hardware metadata is unavailable
+%
+% Example:
+% \input{appendix/configs}
+
+\chapter{Additional Diagnostics Not Already in Chapter 5}
+\label{app:results}
+% Suggested contents:
+% - skill-inference ablations
+% - empty-skill charts / summaries
+% - optional low-level diagnostics not already shown in the main text
+%
+% Example:
+% \input{appendix/results}
+
+\chapter{Additional Tables and Figures Not Used in the Main Text}
+\label{app:artifacts}
+% Suggested contents:
+% - overflow figures and tables that strengthen the thesis but are not shown
+%   in Chapters 4 and 5
+% - empty-skill diagnostic charts
+% - per-dataset or per-expert distribution visuals
+%
+% Example:
+% \input{appendix/overflow_figures_tables}
+
+% Optional only if you want more qualitative examples than already appear in
+% the main dissertation body.
+%
+% \chapter{Extended Qualitative Cases}
+% \label{app:cases}
+% % Suggested contents:
+% % - overflow case archive beyond the representative cases already discussed
+% %   in Chapter 5
+% %
+% % Example:
+% % \input{appendix/case_studies}
+
+\end{appendices}

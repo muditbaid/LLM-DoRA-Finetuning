@@ -1,0 +1,21 @@
+% Requires: \usepackage{booktabs}
+
+\begin{table}[htbp]
+\centering
+\caption{Dataset Summary}
+\label{tab:dataset-summary}
+\small
+\begin{tabular}{p{3.2cm} p{2.1cm} p{3.8cm} r r r}
+\toprule
+Dataset & Task family & Labels & Train count & Validation count & Test count \\
+\midrule
+DynaHate & Hate & hate / not hate & 32916 & 4100 & 4120 \\
+TweetEval Offensive & Offense & offensive / not offensive & 7882 & 918 & 480 \\
+SOSNet Cyberbullying & Bully & bully / not bully & 35883 & 3986 & N/A \\
+Jigsaw Threat & Threat & threat / not threat & 3500 & 1334 & 1334 \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.5em}
+\parbox{0.96\linewidth}{\footnotesize Note. The cyberbullying conversion available in this repository contains train and validation splits only; no separate original test JSONL artifact is present under \texttt{data/}.}
+\end{table}

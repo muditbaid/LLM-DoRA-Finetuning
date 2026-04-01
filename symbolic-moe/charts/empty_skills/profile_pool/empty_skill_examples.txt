@@ -1,0 +1,83 @@
+DATASET: DynaHate
+EMPTY COUNT: 751
+POSITIVE EXAMPLES:
+- profile_dynahate_0005 | hate | These cwears are going too far. Personally I think maintaining an extremely well-manicured lawn is a waste of time, money, and mostly water. It is just unnecessary to me. But these people are looking into it way too much, like calm tf down.
+- profile_dynahate_0033 | hate | luton is a massive pakki city
+- profile_dynahate_0072 | hate | Realistically the future (collapse) is Female.
+- profile_dynahate_0161 | hate | India and China won't take other countries trash, why should we let them in here?
+- profile_dynahate_0188 | hate | Whomever causes the most animal extinction in a territory is regarded as indigenous
+- profile_dynahate_0228 | hate | My Korean friend would like me to visit her hometown, but the smell of soya will make me sick.
+- profile_dynahate_0245 | hate | curr13z are everywhere
+- profile_dynahate_0246 | hate | Camel Boys are everywhere in my borough
+NEGATIVE EXAMPLES:
+- profile_dynahate_0015 | not hate | my bf is a transgender black man and I love him with all my heart.
+- profile_dynahate_0022 | not hate | there is rubbish on the streets it needs to be cleaned up and for you to take this seriously not to just treat it like a big joke
+- profile_dynahate_0023 | not hate | That's ok, mate, heaven will be then. You'll stay with all the beasts. Didn't see any of you the other day.
+- profile_dynahate_0024 | not hate | I got hapa tattooed on me haha it isn‘t offensive! At least not to me or my friends
+- profile_dynahate_0027 | not hate | This computer is junk
+- profile_dynahate_0028 | not hate | just got called by work while I was on the tube, what a fucking disaster.
+- profile_dynahate_0031 | not hate | There are so many types of honey that come from flowers. The darker they are, the less sweet, but more nutrituous.
+- profile_dynahate_0050 | not hate | Don't worry guys we might be divided by countries, but we are united by fighting dreadful terrorism.
+
+DATASET: TweetEval Offensive
+EMPTY COUNT: 1292
+POSITIVE EXAMPLES:
+- profile_tweeteval_offensive_0002 | offensive | @user @user Quite possible. You are very right to be skeptical. But one has to start somewhere !
+- profile_tweeteval_offensive_0011 | offensive | @user @user @user @user @user philosophically speaking, can a hippie, crazy cat lady who supports antiFa still be called a fascist""? literally asking for a friend who's a constitutional ""scholar"".""
+- profile_tweeteval_offensive_0012 | offensive | @user Go to la casa de las micheladas!!!! They have some crazy ass ones!
+- profile_tweeteval_offensive_0028 | offensive | @user He is! Talking about “ I don’t need excuses I just need my money” 💀😂
+- profile_tweeteval_offensive_0047 | offensive | @user He schools read a ammo box warning label...
+- profile_tweeteval_offensive_0064 | offensive | @user @user You are 20X the trader I am lol I’m screwed but I have a tight stop. I’ll let it ride!
+- profile_tweeteval_offensive_0072 | offensive | @user @user She is full of bunk.
+- profile_tweeteval_offensive_0090 | offensive | @user Damn he fell victim to a little thing called TOS much like the ones on his own site
+NEGATIVE EXAMPLES:
+- profile_tweeteval_offensive_0001 | not offensive | @user Antifa is expressly anti Nazi. Is Nunes identifying with Nazis?
+- profile_tweeteval_offensive_0003 | not offensive | @user @user If the NDP were to get 26% then @user would win because the gains by both the NDP and PCs are directly from the Liberals. However I doubt the NDP get over 20%. I had Ches at the start but he performed really bad in the debates but then again there 
+- profile_tweeteval_offensive_0006 | not offensive | @user @user So a cop kills someone and this becomes a gun control issue?
+- profile_tweeteval_offensive_0008 | not offensive | #omg #bobbybrown sister #leolahbrown is not having it with #bet #Bobby roe story she is calling out his ex-wife for fabrication and #lies #celebnmusic247 #celebritynews #breakingnews #news #thebobbybrownstory
+- profile_tweeteval_offensive_0016 | not offensive | @user @user please provide links to huge budget deficits""?..while you are looking..tell us why Harpers deficits were good but you take issue with PMJT lower deficits..take your time..no hurry..""
+- profile_tweeteval_offensive_0017 | not offensive | @user @user He is german 😂 he play for 🐖 club fcb ssshhhhhiiiiiiiiiiiiiiiit
+- profile_tweeteval_offensive_0020 | not offensive | @user It’s (she) is a real problem.
+- profile_tweeteval_offensive_0025 | not offensive | @user We as conservatives must join the fight against Transphobia"" -National Review, 2020""
+
+DATASET: SOSNet Cyberbullying
+EMPTY COUNT: 821
+POSITIVE EXAMPLES:
+- profile_kaggle_cyberbullying_0007 | label: bully; type: age | Every girl who bullied me in high school is now making that annoying brand of cursive font Instagram crafts
+- profile_kaggle_cyberbullying_0008 | label: bully; type: religion | Yes cancel your appearance. The SA is a Christian organization and doesn’t support radical agendas.
+- profile_kaggle_cyberbullying_0026 | label: bully; type: age | Did we all have the same roommate? This girl started crying and talking about She got bullied in high school. That’s nice honey -don’t forget to wipe the counter when you’re done.
+- profile_kaggle_cyberbullying_0031 | label: bully; type: gender | #mkr Promo girls are going to BRING IT in the next round. Yeah! Bring it! Bring your store bought capsicums!
+- profile_kaggle_cyberbullying_0041 | label: bully; type: age | Girls that bullied me in high school: “hi girly, long time no talk. Let me tell you about my essential oils” Me: “I’ve been on that oily life”
+- profile_kaggle_cyberbullying_0059 | label: bully; type: age | |~ if my middle school days of watching Bully gameplay says anything, yes
+- profile_kaggle_cyberbullying_0060 | label: bully; type: religion | @mehrdad20090706 @TalebAshrafi @iran_policy Do you think that they do it because the prophet Mohammed fought for plunder?
+- profile_kaggle_cyberbullying_0073 | label: bully; type: religion | This is a jihad against brutality, to bring terrorist towards normality and humanity #DrQadri #35thFoundationDayOfMQI
+NEGATIVE EXAMPLES:
+- profile_kaggle_cyberbullying_0000 | label: not_bully; type: none | #chevape #paprikash #wogfood #MKR2015
+- profile_kaggle_cyberbullying_0001 | label: not_bully; type: none | Yep it's Monday
+- profile_kaggle_cyberbullying_0006 | label: not_bully; type: none | Annie is giving Rob a run for his money in the silly hat competition. #mkr
+- profile_kaggle_cyberbullying_0017 | label: not_bully; type: none | I had a meeting with the principal and I'm being forced to go to this.. It's supposed to be on bullying or something.. @moosechester83
+- profile_kaggle_cyberbullying_0019 | label: not_bully; type: none | No u. http://t.co/zOr0eWahSS
+- profile_kaggle_cyberbullying_0033 | label: not_bully; type: none | @hassanfarias O problema é que hoje em dia as pessoas confundem crítica, ou simplesmente falar a verdade, com bullying, aí fica difícil.
+- profile_kaggle_cyberbullying_0036 | label: not_bully; type: none | @Mariana_gmez Sin amistad no hay bulling
+- profile_kaggle_cyberbullying_0051 | label: not_bully; type: none | Rob, ditch your hat!! #mkr
+
+DATASET: Jigsaw Threat
+EMPTY COUNT: 1477
+POSITIVE EXAMPLES:
+- profile_jigsaw_threat_0002 | threat | In Henry VI, Dick the Butcher: "The first thing we do, let's kill all the lawyers" ~Shakespeare
+- profile_jigsaw_threat_0004 | threat | EXPLODE EXPLODE EXPLODE
+- profile_jigsaw_threat_0006 | threat | Shoot. I had to agree.
+- profile_jigsaw_threat_0017 | threat | If a puttbull comes charging at me, be rest assured I'd shoot it also if I had a gun.
+- profile_jigsaw_threat_0046 | threat | But they sure have nipped a few ankles! :)
+- profile_jigsaw_threat_0060 | threat | Trump will get destroyed in Oregon.
+- profile_jigsaw_threat_0065 | threat | Hunters MUST kill Moose to save them!  They must NEVER be allowed to die without providing the state with a revenue source!
+- profile_jigsaw_threat_0085 | threat | I have to agree, never mind killing the drivers of cars with a broken tail light. It's all so inevitable
+NEGATIVE EXAMPLES:
+- profile_jigsaw_threat_0009 | not threat | I think there is a standard NATO way of calculating it, and the answer is that under whatever the rules are, Canada comes up short..Way short.
+- profile_jigsaw_threat_0010 | not threat | Maybe because the design has already been used for another school district.  You wouldn't want to leave the name of the last school that was built with this design on the presentation.
+- profile_jigsaw_threat_0014 | not threat | Did you not mean Globe and Mail? I believe you made an error , please confirm, thanks.
+- profile_jigsaw_threat_0015 | not threat | REPEAL
+- profile_jigsaw_threat_0019 | not threat | No, we can do more. There needs to be a new political reality in North America. One in which the progressive, democratic parts of the United States, principally California and the New England States, join Canada in a political union. The rest of the U.S. will 
+- profile_jigsaw_threat_0021 | not threat | It has been noted elsewhere in legal commentary that the chaos caused by Jordan is the result of current criminal procedural rules, where stays are the only outcome possible as a Charter remedy due to unreasonable delays in proceedings. Other jurisdictions, su
+- profile_jigsaw_threat_0022 | not threat | This is not an opinion piece.  It is a cry for help.  By the mom.
+- profile_jigsaw_threat_0037 | not threat | More proof that MSM is biased. Thank you,

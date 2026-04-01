@@ -1,0 +1,57 @@
+% Auto-generated from symbolic-moe/results/baseline_all_metrics.md and symbolic-moe/results/nb_all_metrics.md
+\begin{table}[t]
+\centering
+\caption{Test overall comparison across routing settings.}
+\begin{tabular}{lccccccc}
+\toprule
+Setting & Overall Acc & Routing Top-1 & Gold Top-1 & Gold Top-2 & Gold Top-3 & Macro F1 & Micro F1 \\
+\midrule
+Baseline & 0.8500 & 0.6583 & 0.3531 & 0.5042 & 0.7500 & 0.9086 & 0.9333 \\
+NB Top-1 & 0.5708 & 0.5708 & 0.3297 & 0.3297 & 0.3297 & 0.9065 & 0.8970 \\
+NB Top-2 & 0.8135 & 0.6698 & 0.4130 & 0.7177 & 0.7177 & 0.9276 & 0.9371 \\
+NB Top-3 & 0.8682 & 0.6698 & 0.4130 & 0.7177 & 0.8740 & 0.9224 & 0.9266 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Test dataset accuracy by routing setting.}
+\begin{tabular}{lcccc}
+\toprule
+Dataset & Baseline & NB Top-1 & NB Top-2 & NB Top-3 \\
+\midrule
+DynaHate & 0.9042 & 0.8000 & 0.8000 & 0.8792 \\
+Jigsaw Threat & 0.9625 & 0.5167 & 0.9229 & 0.9250 \\
+SOSNet Cyberbullying & 0.9313 & 0.2437 & 0.7937 & 0.8562 \\
+TweetEval Offensive & 0.6021 & 0.7229 & 0.7375 & 0.8125 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{In-domain expert accuracy and F1 by routing setting on test.}
+\begin{tabular}{llcc}
+\toprule
+Expert & Setting & Accuracy & F1 \\
+\midrule
+DynaHate Expert & Baseline & 0.9042 & 0.9109 \\
+DynaHate Expert & NB Top-1 & 0.8918 & 0.9239 \\
+DynaHate Expert & NB Top-2 & 0.8918 & 0.9239 \\
+DynaHate Expert & NB Top-3 & 0.9144 & 0.9221 \\
+Offense Expert & Baseline & 0.8810 & 0.8052 \\
+Offense Expert & NB Top-1 & 0.8786 & 0.8581 \\
+Offense Expert & NB Top-2 & 0.8517 & 0.8324 \\
+Offense Expert & NB Top-3 & 0.8273 & 0.8251 \\
+Cyberbullying Expert & Baseline & 0.9313 & 0.9573 \\
+Cyberbullying Expert & NB Top-1 & 0.8947 & 0.9375 \\
+Cyberbullying Expert & NB Top-2 & 0.9767 & 0.9878 \\
+Cyberbullying Expert & NB Top-3 & 0.9551 & 0.9758 \\
+Threat Expert & Baseline & 0.9625 & 0.9609 \\
+Threat Expert & NB Top-1 & -- & -- \\
+Threat Expert & NB Top-2 & 0.9665 & 0.9663 \\
+Threat Expert & NB Top-3 & 0.9667 & 0.9665 \\
+\bottomrule
+\end{tabular}
+\end{table}

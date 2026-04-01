@@ -13,6 +13,8 @@ KEYWORD_MODEL = BASE_MODEL
 
 SYMBOLIC_ROOT = Path(__file__).resolve().parent
 VALIDATION_POOL = SYMBOLIC_ROOT / "validation_pool.jsonl"
+PROFILE_POOL = SYMBOLIC_ROOT / "profile_pool.jsonl"
+PROFILE_POOL_SKILLS = SYMBOLIC_ROOT / "profile_pool_skills.jsonl"
 TEST_SAMPLE = SYMBOLIC_ROOT / "test_sample_skills.jsonl"
 PROFILES_PATH = SYMBOLIC_ROOT / "profiles.json"
 

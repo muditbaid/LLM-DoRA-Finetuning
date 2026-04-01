@@ -1,0 +1,18 @@
+% Requires: \usepackage{booktabs}
+
+\begin{table}[htbp]
+\centering
+\caption{Threat-related comparison using Jigsaw benchmarks. Prior baseline scores are reported from Khan (2023) and Islam et al.\ (2023); these reported accuracies come from broader toxicity setups and are not strictly identical to the local binary threat evaluation used for Threat Expert.}
+\label{tab:jigsaw-threat-benchmark-comparison}
+\small
+\begin{tabular}{p{8.2cm} r p{2.0cm}}
+\toprule
+Model & Accuracy & Setting \\
+\midrule
+Threat Expert & 0.964 & Fine-tuned \\
+BERT (Khan, 2023) & 0.890 & Fine-tuned \\
+Ensemble (RF + Bagging + GB + AdaBoost; Islam et al., 2023) & 0.898 & Supervised \\
+Logistic Regression + TF-IDF (Khan, 2023) & 0.571 & Supervised \\
+\bottomrule
+\end{tabular}
+\end{table}

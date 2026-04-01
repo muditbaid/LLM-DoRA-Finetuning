@@ -1,0 +1,17 @@
+% Requires: \usepackage{booktabs}
+
+\begin{table}[htbp]
+\centering
+\caption{Data Pool Composition}
+\label{tab:data-pool-composition}
+\small
+\begin{tabular}{p{2.3cm} r r r r r p{4.0cm}}
+\toprule
+Pool name & Total & DynaHate & TweetEval & SOSNet & Jigsaw & Purpose \\
+\midrule
+Profile pool & 14000 & 3500 & 3500 & 3500 & 3500 & Build expert profiles from inferred skill annotations. \\
+Validation pool & 3672 & 918 & 918 & 918 & 918 & Calibrate the routing threshold parameter $\alpha$. \\
+Test pool & 1920 & 480 & 480 & 480 & 480 & Evaluate the final pipeline on held-out examples. \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,21 @@
+# Baseline Router: Routing Metrics
+
+## Overall Routing
+
+| Split | Routing Top-1 | Gold Top-1 | Gold Top-2 | Gold Top-3 | Gold Top-4 |
+|---|---|---|---|---|---|
+| Validation | 0.6353 | 0.3519 | 0.5076 | 0.7500 | 0.8630 |
+| Test | 0.6583 | 0.3531 | 0.5042 | 0.7500 | 0.8812 |
+
+## Per-Dataset Routing
+
+| Dataset | Split | Top-1 Routed Acc | Gold Top-1 | Gold Top-2 | Gold Top-3 | Gold Top-4 |
+|---|---|---|---|---|---|---|
+| DynaHate | Validation | 0.4542 | 0.0011 | 0.0349 | 1.0000 | 1.0000 |
+| Jigsaw Threat | Validation | 0.7810 | 0.7397 | 0.9956 | 1.0000 | 1.0000 |
+| SOSNet Cyberbullying | Validation | 0.8061 | 0.6667 | 1.0000 | 1.0000 | 1.0000 |
+| TweetEval Offensive | Validation | 0.5000 | 0.0000 | 0.0000 | 0.0000 | 0.4521 |
+| DynaHate | Test | 0.4708 | 0.0000 | 0.0187 | 1.0000 | 1.0000 |
+| Jigsaw Threat | Test | 0.8417 | 0.7354 | 0.9979 | 1.0000 | 1.0000 |
+| SOSNet Cyberbullying | Test | 0.8208 | 0.6771 | 1.0000 | 1.0000 | 1.0000 |
+| TweetEval Offensive | Test | 0.5000 | 0.0000 | 0.0000 | 0.0000 | 0.5250 |
