@@ -1,0 +1,1 @@
+Strictly respond only with the label: 'hate' or 'not hate'.

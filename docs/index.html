@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="slides-format" content="viewport">
+    <title>Skill-Based LLM Expert Routing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+        @theme {
+            --color-bg: #0c1220;
+            --color-bg-deep: #070d18;
+            --color-surface: #141e30;
+            --color-text: #e8f0fe;
+            --color-text-secondary: #a8bbd4;
+            --color-text-muted: #6882a0;
+            --color-accent-1: #6C8EF5;
+            --color-accent-2: #a78bfa;
+            --color-accent-3: #38bdf8;
+            --color-glass-bg: rgba(255,255,255,0.05);
+            --color-glass-border: rgba(255,255,255,0.09);
+            --color-vignette: rgba(0,0,0,0.45);
+            --font-display: 'Instrument Serif', Georgia, serif;
+            --font-body: 'Inter', sans-serif;
+        }
+    </style>
+    <style>
+        :root { --color-bg: #0c1220; --color-text: #e8f0fe; --glow-color-rgb: 108,142,245; }
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { background: var(--color-bg); margin: 0; }
+        body { font-family: var(--font-body); color: var(--color-text); overflow: hidden; height: 100vh; width: 100vw; }
+        .deck { width: 100vw; height: 100vh; position: relative; }
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--color-bg); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transform: scale(0.95); transition: opacity 0.7s ease, transform 0.7s ease; pointer-events: none; overflow: hidden; }
+        .slide.active { opacity: 1; transform: scale(1); pointer-events: all; }
+        .slide > .content { position: relative; z-index: 2; width: 100%; max-width: 1100px; padding: clamp(1.2rem, 3vw, 3.2rem); }
+        .nav-controls { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; z-index: 100; background: var(--color-glass-bg); backdrop-filter: blur(10px); padding: 8px 22px; border-radius: 40px; border: 1px solid var(--color-glass-border); }
+        .nav-btn { width: 36px; height: 36px; border: none; background: var(--color-glass-bg); color: var(--color-accent-1); border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.3s; }
+        .nav-btn:hover { background: var(--color-glass-border); }
+        .slide-dots { display: flex; gap: 6px; flex-wrap: wrap; max-width: 300px; justify-content: center; }
+        .slide-dots .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-glass-border); cursor: pointer; transition: background 0.3s, transform 0.3s; }
+        .slide-dots .dot.active { background: var(--color-accent-1); transform: scale(1.3); }
+        .slide-counter { font-size: 0.75rem; color: var(--color-text-muted); min-width: 36px; text-align: center; }
+        .reveal { opacity: 0; transform: translateY(20px); }
+        .text-glow { text-shadow: 0 0 20px rgba(108,142,245,0.5), 0 0 40px rgba(108,142,245,0.2); }
+        .stat-glow { text-shadow: 0 0 30px rgba(108,142,245,0.6), 0 0 60px rgba(108,142,245,0.25); }
+        @keyframes glow-pulse {
+            0%, 100% { text-shadow: 0 0 20px rgba(108,142,245,0.5), 0 0 40px rgba(108,142,245,0.2); }
+            50% { text-shadow: 0 0 30px rgba(108,142,245,0.8), 0 0 60px rgba(108,142,245,0.3); }
+        }
+        .glow-pulse { animation: glow-pulse 3s ease-in-out infinite; }
+        @keyframes float-slow { 0% { transform: translate(0,0) scale(1); } 25% { transform: translate(60px,-50px) scale(1.12); } 50% { transform: translate(-40px,40px) scale(0.9); } 75% { transform: translate(50px,20px) scale(1.08); } 100% { transform: translate(0,0) scale(1); } }
+        @keyframes float-drift { 0% { transform: translate(0,0) scale(1) rotate(0deg); } 33% { transform: translate(-50px,-60px) scale(1.15) rotate(3deg); } 66% { transform: translate(40px,30px) scale(0.88) rotate(-2deg); } 100% { transform: translate(0,0) scale(1) rotate(0deg); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        .gradient-mesh { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+        .blob { position: absolute; border-radius: 50%; filter: blur(80px); animation: float-slow 10s ease-in-out infinite; }
+        .blob:nth-child(2) { animation: float-drift 14s ease-in-out infinite; }
+        .blob:nth-child(3) { animation: float-slow 18s ease-in-out infinite reverse; }
+        .slide::before { content:''; position:absolute; inset:0; z-index:1; pointer-events:none; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); background-repeat:repeat; background-size:256px 256px; opacity:0.03; mix-blend-mode:overlay; }
+        .slide::after { content:''; position:absolute; inset:0; z-index:1; pointer-events:none; background:radial-gradient(ellipse at center, transparent 50%, var(--color-vignette) 100%); }
+        .bar-fill { height: 100%; border-radius: 4px; transition: width 0.7s ease; }
+        .bar-track { background: rgba(255,255,255,0.07); border-radius: 4px; height: 10px; overflow: hidden; }
+        .section-label { font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-accent-1); margin-bottom: 0.5rem; }
+        .accent-left { border-left: 3px solid var(--color-accent-1); padding-left: 1rem; }
+        .accent-left-2 { border-left: 3px solid var(--color-accent-2); padding-left: 1rem; }
+        .accent-left-3 { border-left: 3px solid var(--color-accent-3); padding-left: 1rem; }
+        .pill { display: inline-block; padding: 0.18rem 0.7rem; border-radius: 999px; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em; }
+        .skill-chip { display: inline-block; background: rgba(108,142,245,0.15); border: 1px solid rgba(108,142,245,0.3); color: #a8bbd4; font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 999px; margin: 2px; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; } }
+    </style>
+</head>
+<body>
+<div class="mouse-spotlight" style="position:fixed;inset:0;z-index:99;pointer-events:none;"></div>
+<div class="deck">
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 1 : TITLE
+══════════════════════════════════════════════ -->
+<div class="slide active" data-slide="1">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:520px;height:520px;top:-120px;right:-100px;background:var(--color-accent-1);opacity:0.14;"></div>
+        <div class="blob" style="width:320px;height:320px;bottom:-90px;left:-70px;background:var(--color-accent-2);opacity:0.11;"></div>
+        <div class="blob" style="width:220px;height:220px;top:45%;left:12%;background:var(--color-accent-3);opacity:0.09;"></div>
+    </div>
+    <canvas class="particle-canvas" style="position:absolute;inset:0;z-index:1;"></canvas>
+    <div class="content text-center">
+        <div style="font-size:80px;margin-bottom:1rem;animation:float 3s ease-in-out infinite;" class="reveal">🧠</div>
+        <h1 class="font-display text-[clamp(1.9rem,4.5vw,3.6rem)] font-bold bg-linear-to-br from-accent-1 via-accent-2 to-accent-1 bg-clip-text text-transparent tracking-tight mb-3 reveal">Skill-Based LLM Driven Expert Routing</h1>
+        <p class="text-[clamp(0.85rem,1.3vw,1.1rem)] text-text-muted tracking-[4px] uppercase mb-5 reveal">for Multi-Label Harmful Language Detection</p>
+        <div class="flex justify-center gap-6 flex-wrap reveal">
+            <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-xl px-5 py-3">
+                <p class="text-text-secondary text-sm font-medium">Mudit Baid</p>
+                <p class="text-text-muted text-xs">M.S. Thesis , University of Georgia</p>
+            </div>
+            <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-xl px-5 py-3">
+                <p class="text-text-secondary text-sm font-medium">Advisor: Dr. I. B. Arpinar</p>
+                <p class="text-text-muted text-xs">Committee: Dr. Rasheed · Dr. Himelboim</p>
+            </div>
+            <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-xl px-5 py-3">
+                <p class="text-text-secondary text-sm font-medium">May 2026</p>
+                <p class="text-text-muted text-xs">Athens, Georgia</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 2 : AGENDA
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="2">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:350px;height:350px;top:-80px;right:-60px;background:var(--color-accent-1);opacity:0.08;"></div>
+        <div class="blob" style="width:240px;height:240px;bottom:-50px;left:-40px;background:var(--color-accent-2);opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <p class="section-label reveal">Overview</p>
+        <h2 class="font-display text-[clamp(1.7rem,3.5vw,2.5rem)] font-bold mb-6 reveal">Presentation Roadmap</h2>
+        <div class="grid grid-cols-2 gap-4 reveal">
+            <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-xl p-4 flex gap-3 items-start hover:-translate-y-1 transition">
+                <span class="text-2xl">🎯</span>
+                <div><p class="font-semibold text-sm text-text">Introduction &amp; Motivation</p><p class="text-xs text-text-muted mt-1">Problem statement, fragmented supervision, research gap</p></div>
+            </div>
+            <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-xl p-4 flex gap-3 items-start hover:-translate-y-1 transition">
+                <span class="text-2xl">📚</span>
+                <div><p class="font-semibold text-sm text-text">Literature Review</p><p class="text-xs text-text-muted mt-1">Datasets, detection models, ensembles &amp; MoE gaps</p></div>
+            </div>
+            <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-xl p-4 flex gap-3 items-start hover:-translate-y-1 transition">
+                <span class="text-2xl">⚙️</span>
+                <div><p class="font-semibold text-sm text-text">Methodology</p><p class="text-xs text-text-muted mt-1">Datasets, preprocessing, skill inference, routing pipeline</p></div>
+            </div>
+            <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-xl p-4 flex gap-3 items-start hover:-translate-y-1 transition">
+                <span class="text-2xl">📐</span>
+                <div><p class="font-semibold text-sm text-text">Evaluation Protocol</p><p class="text-xs text-text-muted mt-1">Multi-expert evaluation, metrics, pool design</p></div>
+            </div>
+            <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-xl p-4 flex gap-3 items-start hover:-translate-y-1 transition">
+                <span class="text-2xl">📊</span>
+                <div><p class="font-semibold text-sm text-text">Results</p><p class="text-xs text-text-muted mt-1">Expert performance, routing behavior, interpretability</p></div>
+            </div>
+            <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-xl p-4 flex gap-3 items-start hover:-translate-y-1 transition">
+                <span class="text-2xl">🔭</span>
+                <div><p class="font-semibold text-sm text-text">Conclusion &amp; Future Work</p><p class="text-xs text-text-muted mt-1">Findings, limitations, next steps</p></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 3 : MOTIVATION / PROBLEM
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="3">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:380px;height:380px;top:-60px;left:-80px;background:var(--color-accent-2);opacity:0.08;"></div>
+        <div class="blob" style="width:260px;height:260px;bottom:-40px;right:-40px;background:var(--color-accent-1);opacity:0.07;"></div>
+    </div>
+    <div class="content">
+        <p class="section-label reveal">Introduction</p>
+        <h2 class="font-display text-[clamp(1.6rem,3.2vw,2.4rem)] font-bold mb-5 reveal">The Core Problem: Fragmented Supervision</h2>
+        <div class="grid grid-cols-2 gap-5">
+            <div class="reveal">
+                <div class="accent-left mb-3">
+                    <p class="font-semibold text-sm text-text">Real-world posts overlap categories</p>
+                    <p class="text-xs text-text-muted mt-1">A single post can contain hate speech + profanity + threatening language simultaneously , yet most benchmarks treat these as <em>separate binary tasks</em>.</p>
+                </div>
+                <div class="accent-left-2 mb-3">
+                    <p class="font-semibold text-sm text-text">No unified multilabel benchmark exists</p>
+                    <p class="text-xs text-text-muted mt-1">Bumler et al. (2025) reviewed 46 studies, found 28 datasets : <strong>zero</strong> covering hate, offense, bully &amp; threat under one consistent schema.</p>
+                </div>
+                <div class="accent-left-3">
+                    <p class="font-semibold text-sm text-text">Cross-dataset generalization fails</p>
+                    <p class="text-xs text-text-muted mt-1">Antypas &amp; Camacho-Collados (2023) showed models trained on one dataset exhibit <em>persistent bias</em> on others due to annotation drift.</p>
+                </div>
+            </div>
+            <div class="reveal">
+                <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-xl p-4 mb-3">
+                    <p class="text-xs text-text-muted mb-2 uppercase tracking-wider">Example Overlapping Post</p>
+                    <p class="text-xs italic text-text-secondary">"These [Group] are literal vermin. We need to eradicate them all."</p>
+                    <div class="mt-2 flex flex-wrap gap-1">
+                        <span class="skill-chip">Hate Speech</span>
+                        <span class="skill-chip">Threat</span>
+                        <span class="skill-chip">Dehumanization</span>
+                    </div>
+                </div>
+                <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-xl p-4">
+                    <p class="text-xs text-text-muted uppercase tracking-wider mb-2">Supervision Fragmentation</p>
+                    <div class="space-y-2 text-xs text-text-secondary">
+                        <div class="flex justify-between items-center"><span>DynaHate → Hate/Not-hate</span><span class="pill" style="background:rgba(108,142,245,0.2);color:#a8bbd4;">Binary</span></div>
+                        <div class="flex justify-between items-center"><span>TweetEval → Offensive/Not</span><span class="pill" style="background:rgba(167,139,250,0.2);color:#c4b5fd;">Binary</span></div>
+                        <div class="flex justify-between items-center"><span>SOSNet → Bully/Not</span><span class="pill" style="background:rgba(56,189,248,0.2);color:#7dd3fc;">Binary</span></div>
+                        <div class="flex justify-between items-center"><span>Jigsaw → Threat/Not</span><span class="pill" style="background:rgba(52,211,153,0.2);color:#6ee7b7;">Binary</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 4 : RESEARCH QUESTIONS & CONTRIBUTIONS
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="4">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:400px;height:400px;top:-80px;right:-60px;background:var(--color-accent-1);opacity:0.09;"></div>
+        <div class="blob" style="width:220px;height:220px;bottom:-40px;left:-30px;background:var(--color-accent-3);opacity:0.07;"></div>
+    </div>
+    <div class="content">
+        <p class="section-label reveal">Introduction</p>
+        <h2 class="font-display text-[clamp(1.6rem,3vw,2.3rem)] font-bold mb-5 reveal">Research Questions &amp; Contributions</h2>
+        <div class="grid grid-cols-2 gap-5">
+            <div class="reveal">
+                <p class="text-xs uppercase tracking-widest text-text-muted mb-3">4 Research Questions</p>
+                <div class="space-y-3">
+                    <div class="bg-glass-bg border border-glass-border rounded-lg p-3"><p class="text-xs text-text-secondary"><span class="text-accent-1 font-bold">RQ1</span> Can binary specialists recover multilabel detection under fragmented supervision?</p></div>
+                    <div class="bg-glass-bg border border-glass-border rounded-lg p-3"><p class="text-xs text-text-secondary"><span class="text-accent-2 font-bold">RQ2</span> Does skill-based routing improve expert selection vs. static strategies?</p></div>
+                    <div class="bg-glass-bg border border-glass-border rounded-lg p-3"><p class="text-xs text-text-secondary"><span class="text-accent-3 font-bold">RQ3</span> Do explicit skills improve interpretability vs. monolithic models?</p></div>
+                    <div class="bg-glass-bg border border-glass-border rounded-lg p-3"><p class="text-xs text-text-secondary"><span style="color:#f472b6;" class="font-bold">RQ4</span> What limits persist when using fragmented benchmarks for moderation?</p></div>
+                </div>
+            </div>
+            <div class="reveal">
+                <p class="text-xs uppercase tracking-widest text-text-muted mb-3">3 Key Contributions</p>
+                <div class="space-y-3">
+                    <div class="accent-left">
+                        <p class="text-sm font-semibold text-text">Expert Profiling via Skill Mapping</p>
+                        <p class="text-xs text-text-muted mt-1">Empirical skill-conditioned competence profiles: first interpretable expert profiles for harmful-language routing</p>
+                    </div>
+                    <div class="accent-left-2">
+                        <p class="text-sm font-semibold text-text">Bernoulli Skill-Pattern Router</p>
+                        <p class="text-xs text-text-muted mt-1">Novel router using both presence <em>and absence</em> of skills as signal: improves top-1 accuracy from 0.635 → 0.682</p>
+                    </div>
+                    <div class="accent-left-3">
+                        <p class="text-sm font-semibold text-text">Empirical Multilabel Recovery</p>
+                        <p class="text-xs text-text-muted mt-1">Demonstrates multilabel detection from independently fine-tuned binary experts : macro F1 ≈ 0.93</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 5 : LITERATURE REVIEW (section divider)
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="5">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:500px;height:500px;top:-150px;right:-100px;background:var(--color-accent-2);opacity:0.13;"></div>
+        <div class="blob" style="width:300px;height:300px;bottom:-80px;left:-60px;background:var(--color-accent-1);opacity:0.10;"></div>
+    </div>
+    <canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1;"></canvas>
+    <div class="content text-center">
+        <p class="section-label reveal">Chapter 2</p>
+        <h2 class="font-display text-[clamp(2.5rem,6vw,4.5rem)] font-bold bg-linear-to-br from-accent-2 via-accent-1 to-accent-3 bg-clip-text text-transparent mb-4 reveal">Literature Review</h2>
+        <p class="text-text-muted text-base max-w-lg mx-auto reveal">Datasets · Detection Models · Ensembles · Research Gap</p>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 6 : LIT REVIEW: LANDSCAPE
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="6">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:360px;height:360px;top:-70px;right:-50px;background:var(--color-accent-2);opacity:0.07;"></div>
+        <div class="blob" style="width:220px;height:220px;bottom:-40px;left:-30px;background:var(--color-accent-1);opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <p class="section-label reveal">Literature Review</p>
+        <h2 class="font-display text-[clamp(1.5rem,2.8vw,2.2rem)] font-bold mb-4 reveal">Prior Work: What Exists &amp; What Doesn't</h2>
+        <div class="grid grid-cols-3 gap-4 reveal">
+            <div class="bg-glass-bg border border-glass-border rounded-xl p-4 hover:-translate-y-1 transition">
+                <p class="text-accent-1 font-bold text-sm mb-2">Binary Datasets</p>
+                <ul class="text-xs text-text-secondary space-y-1">
+                    <li>• Davidson et al. (2017) - 25K tweets, 3-class</li>
+                    <li>• OLID/OffensEval (2019) - hierarchical offensive labels</li>
+                    <li>• DynaHate (2021) - adversarial, 4-round dynamic collection</li>
+                    <li>• <em>Table 2.1</em> summarizes 9 key studies</li>
+                </ul>
+            </div>
+            <div class="bg-glass-bg border border-glass-border rounded-xl p-4 hover:-translate-y-1 transition">
+                <p class="text-accent-2 font-bold text-sm mb-2">Multilabel Resources</p>
+                <ul class="text-xs text-text-secondary space-y-1">
+                    <li>• Jigsaw Toxic (2018) - 160K, 6 labels, Wikipedia only</li>
+                    <li>• ETHOS (2022) - 998 posts, attribute-focused</li>
+                    <li>• HateXplain (2021) - rationale annotations, not flat multilabel</li>
+                    <li>• None cover hate+offense+bully+threat together</li>
+                </ul>
+            </div>
+            <div class="bg-glass-bg border border-glass-border rounded-xl p-4 hover:-translate-y-1 transition">
+                <p class="text-accent-3 font-bold text-sm mb-2">Detection Models</p>
+                <ul class="text-xs text-text-secondary space-y-1">
+                    <li>• Pre-DL: LR + TF-IDF, SVM, Naive Bayes</li>
+                    <li>• Deep: CNN/BiLSTM + Word2Vec/GloVe</li>
+                    <li>• Transformers: BERT, HateBERT, RoBERTa → SOTA</li>
+                    <li>• LLMs: GPT-4, LLaMA - prompt-sensitive, costly</li>
+                </ul>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mt-4 reveal">
+            <div class="bg-glass-bg border border-glass-border rounded-xl p-4 hover:-translate-y-1 transition">
+                <p class="font-semibold text-sm text-text mb-1">Ensembles &amp; MoE</p>
+                <p class="text-xs text-text-secondary">Shazeer et al. (2017) sparse gating; Mixtral (2024) sparse MoE : both use <em>latent</em> neural gates. Symbolic-MoE (Chen et al., 2025) introduces human-readable skill routing, which this thesis adapts to harmful-language detection.</p>
+            </div>
+            <div class="bg-glass-bg border border-glass-border rounded-xl p-4 hover:-translate-y-1 transition" style="border-left:3px solid var(--color-accent-1);">
+                <p class="font-semibold text-sm text-accent-1 mb-1">Research Gap → This Thesis</p>
+                <p class="text-xs text-text-secondary">No prior work combined: <strong>(1)</strong> heterogeneous binary experts + <strong>(2)</strong> dynamic per-instance routing + <strong>(3)</strong> interpretable symbolic skills + <strong>(4)</strong> multilabel output. <em>See Table 2.1.</em></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 7 : METHODOLOGY SECTION DIVIDER
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="7">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:480px;height:480px;top:-130px;left:-100px;background:var(--color-accent-3);opacity:0.12;"></div>
+        <div class="blob" style="width:280px;height:280px;bottom:-60px;right:-50px;background:var(--color-accent-1);opacity:0.09;"></div>
+    </div>
+    <canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1;"></canvas>
+    <div class="content text-center">
+        <p class="section-label reveal">Chapter 4</p>
+        <h2 class="font-display text-[clamp(2.5rem,6vw,4.5rem)] font-bold bg-linear-to-br from-accent-3 via-accent-1 to-accent-2 bg-clip-text text-transparent mb-4 reveal">Methodology</h2>
+        <p class="text-text-muted text-base max-w-lg mx-auto reveal">Datasets · Preprocessing · Skill Inference · Expert Profiling · Routing</p>
+        <p class="text-text-muted text-sm mt-2 reveal"><em>Figure 4.1: Skill-Based Expert Routing Pipeline</em></p>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 8 : DATASETS
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="8">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:340px;height:340px;top:-60px;right:-40px;background:var(--color-accent-3);opacity:0.07;"></div>
+        <div class="blob" style="width:220px;height:220px;bottom:-40px;left:-30px;background:var(--color-accent-1);opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <p class="section-label reveal">Methodology - Datasets</p>
+        <h2 class="font-display text-[clamp(1.5rem,2.8vw,2.1rem)] font-bold mb-4 reveal">Four Task-Specific Benchmarks <span class="text-text-muted text-base font-normal">(Table 4.1, Table 4.2)</span></h2>
+        <div class="grid grid-cols-4 gap-3 reveal">
+            <div class="bg-glass-bg border border-glass-border rounded-xl p-4 hover:-translate-y-1 transition text-center">
+                <div style="font-size:2rem;margin-bottom:0.5rem;">🔥</div>
+                <p class="font-bold text-accent-1 text-sm">DynaHate</p>
+                <p class="text-xs text-text-muted mt-1">Hate vs. Not-hate</p>
+                <p class="text-xs text-text-secondary mt-2">Adversarial, 4-round collection. Dynamic annotation resists model brittleness.</p>
+                <p class="text-xs text-accent-1 mt-2 font-semibold">3,500 profile rows</p>
+            </div>
+            <div class="bg-glass-bg border border-glass-border rounded-xl p-4 hover:-translate-y-1 transition text-center">
+                <div style="font-size:2rem;margin-bottom:0.5rem;">🗣️</div>
+                <p class="font-bold text-accent-2 text-sm">TweetEval-Off.</p>
+                <p class="text-xs text-text-muted mt-1">Offensive vs. Not</p>
+                <p class="text-xs text-text-secondary mt-2">Twitter unified benchmark (Barbieri et al., 2020). Largest offense test set.</p>
+                <p class="text-xs text-accent-2 mt-2 font-semibold">3,500 profile rows</p>
+            </div>
+            <div class="bg-glass-bg border border-glass-border rounded-xl p-4 hover:-translate-y-1 transition text-center">
+                <div style="font-size:2rem;margin-bottom:0.5rem;">👊</div>
+                <p class="font-bold text-accent-3 text-sm">SOSNet</p>
+                <p class="text-xs text-text-muted mt-1">Cyberbullying vs. Not</p>
+                <p class="text-xs text-text-secondary mt-2">Bullying-specific corpus. Bully expert achieves 0.9878 F1 on this benchmark.</p>
+                <p class="text-xs text-accent-3 mt-2 font-semibold">3,500 profile rows</p>
+            </div>
+            <div class="bg-glass-bg border border-glass-border rounded-xl p-4 hover:-translate-y-1 transition text-center">
+                <div style="font-size:2rem;margin-bottom:0.5rem;">⚠️</div>
+                <p class="font-bold" style="color:#f472b6;" >Jigsaw Threat</p>
+                <p class="text-xs text-text-muted mt-1">Threat vs. Not</p>
+                <p class="text-xs text-text-secondary mt-2">Jigsaw Unintended Bias subset (~2M civil comments). Threat sublabel extracted.</p>
+                <p class="text-xs mt-2 font-semibold" style="color:#f472b6;">3,500 profile rows</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3 mt-3 reveal">
+            <div class="bg-glass-bg border border-glass-border rounded-lg p-3">
+                <p class="text-xs text-text-muted uppercase tracking-wider mb-1">Profile Pool</p>
+                <p class="font-bold text-text text-lg">14,000</p>
+                <p class="text-xs text-text-muted">3,500 × 4 datasets - builds expert profiles</p>
+            </div>
+            <div class="bg-glass-bg border border-glass-border rounded-lg p-3">
+                <p class="text-xs text-text-muted uppercase tracking-wider mb-1">Validation Pool</p>
+                <p class="font-bold text-text text-lg">3,672</p>
+                <p class="text-xs text-text-muted">918 × 4 - routing calibration &amp; top-k selection</p>
+            </div>
+            <div class="bg-glass-bg border border-glass-border rounded-lg p-3">
+                <p class="text-xs text-text-muted uppercase tracking-wider mb-1">Test Pool</p>
+                <p class="font-bold text-text text-lg">1,920</p>
+                <p class="text-xs text-text-muted">480 × 4 - held-out final evaluation</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 9 : PREPROCESSING & EXPERT CONSTRUCTION
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="9">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:360px;height:360px;top:-70px;left:-60px;background:var(--color-accent-1);opacity:0.08;"></div>
+        <div class="blob" style="width:220px;height:220px;bottom:-40px;right:-30px;background:var(--color-accent-2);opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <p class="section-label reveal">Methodology - Preprocessing &amp; Experts</p>
+        <h2 class="font-display text-[clamp(1.5rem,2.8vw,2.1rem)] font-bold mb-5 reveal">Expert Model Construction <span class="text-text-muted text-base font-normal">(Table 4.3)</span></h2>
+        <div class="grid grid-cols-2 gap-5">
+            <div class="reveal">
+                <p class="text-xs uppercase tracking-widest text-text-muted mb-3">Preprocessing Steps</p>
+                <div class="space-y-2">
+                    <div class="flex gap-3 items-start bg-glass-bg border border-glass-border rounded-lg p-3">
+                        <span class="text-accent-1 font-bold text-sm">01</span>
+                        <p class="text-xs text-text-secondary">Raw posts mapped to <strong>instruction-style JSONL</strong> entries with task-specific prompt templates</p>
+                    </div>
+                    <div class="flex gap-3 items-start bg-glass-bg border border-glass-border rounded-lg p-3">
+                        <span class="text-accent-2 font-bold text-sm">02</span>
+                        <p class="text-xs text-text-secondary">Label normalization across heterogeneous annotation schemas (hate/not-hate, offensive/not, etc.)</p>
+                    </div>
+                    <div class="flex gap-3 items-start bg-glass-bg border border-glass-border rounded-lg p-3">
+                        <span class="text-accent-3 font-bold text-sm">03</span>
+                        <p class="text-xs text-text-secondary">Each record stored with metadata for routing - task identity, label, confidence threshold</p>
+                    </div>
+                    <div class="flex gap-3 items-start bg-glass-bg border border-glass-border rounded-lg p-3">
+                        <span style="color:#f472b6;" class="font-bold text-sm">04</span>
+                        <p class="text-xs text-text-secondary">Profile, validation, test pool separation enforced <em>before</em> any training or profiling step</p>
+                    </div>
+                </div>
+            </div>
+            <div class="reveal">
+                <p class="text-xs uppercase tracking-widest text-text-muted mb-3">QLoRA Fine-Tuning (Figure 3.1)</p>
+                <div class="bg-glass-bg border border-glass-border rounded-xl p-4 mb-3">
+                    <p class="text-xs text-text-muted mb-2">Base: <strong>LLaMA-3.1-8B-Instruct</strong> → 4 specialists via QLoRA</p>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs"><span class="text-text-secondary">Trainable params (LoRA adapters)</span><span class="text-accent-1 font-semibold">~0.1% of total</span></div>
+                        <div class="flex justify-between text-xs"><span class="text-text-secondary">Base model precision</span><span class="text-accent-2 font-semibold">4-bit quantized</span></div>
+                        <div class="flex justify-between text-xs"><span class="text-text-secondary">Training framework</span><span class="text-accent-3 font-semibold">LLaMA-Factory + SFTTrainer</span></div>
+                        <div class="flex justify-between text-xs"><span class="text-text-secondary">Observability</span><span style="color:#f472b6;" class="font-semibold">LangSmith tracing</span></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-glass-bg border border-glass-border rounded-lg p-2 text-center">
+                        <p class="text-accent-1 font-bold text-sm">Hate Expert</p>
+                        <p class="text-xs text-text-muted">Profile Acc. 0.954</p>
+                    </div>
+                    <div class="bg-glass-bg border border-glass-border rounded-lg p-2 text-center">
+                        <p class="text-accent-2 font-bold text-sm">Offense Expert</p>
+                        <p class="text-xs text-text-muted">Profile Acc. 0.803</p>
+                    </div>
+                    <div class="bg-glass-bg border border-glass-border rounded-lg p-2 text-center">
+                        <p class="text-accent-3 font-bold text-sm">Bully Expert</p>
+                        <p class="text-xs text-text-muted">Profile Acc. 0.963</p>
+                    </div>
+                    <div class="bg-glass-bg border border-glass-border rounded-lg p-2 text-center">
+                        <p style="color:#f472b6;" class="font-bold text-sm">Threat Expert</p>
+                        <p class="text-xs text-text-muted">Profile Acc. 0.973</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 10 : SKILL INFERENCE
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="10">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:360px;height:360px;top:-70px;right:-60px;background:var(--color-accent-1);opacity:0.08;"></div>
+        <div class="blob" style="width:200px;height:200px;bottom:-40px;left:-30px;background:var(--color-accent-3);opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <p class="section-label reveal">Methodology - Skill Inference</p>
+        <h2 class="font-display text-[clamp(1.5rem,2.8vw,2.1rem)] font-bold mb-4 reveal">Skill Inference Module <span class="text-text-muted text-base font-normal">(Figure 4.4)</span></h2>
+        <div class="grid grid-cols-2 gap-5">
+            <div class="reveal">
+                <p class="text-xs uppercase tracking-widest text-text-muted mb-2">11-Skill Vocabulary</p>
+                <div class="flex flex-wrap gap-1 mb-4">
+                    <span class="skill-chip">identity targeting</span>
+                    <span class="skill-chip">dehumanization</span>
+                    <span class="skill-chip">stereotype invocation</span>
+                    <span class="skill-chip">coded hostility</span>
+                    <span class="skill-chip">non-targeted profanity</span>
+                    <span class="skill-chip">general insult</span>
+                    <span class="skill-chip">threatening language</span>
+                    <span class="skill-chip">identity-based bullying</span>
+                    <span class="skill-chip">appearance-based bullying</span>
+                    <span class="skill-chip">age-based bullying</span>
+                    <span class="skill-chip">sexual harassment</span>
+                </div>
+                <div class="accent-left">
+                    <p class="text-xs text-text-secondary">Stochastic sampling with <strong>Meta-LLaMA-3.1-8B-Instruct</strong>. 5 independent runs per post → min-count retention (≥2/5 runs). Returns 0–5 skills per post.</p>
+                </div>
+            </div>
+            <div class="reveal">
+                <p class="text-xs uppercase tracking-widest text-text-muted mb-2">Workflow (Figure 4.4)</p>
+                <div class="space-y-2">
+                    <div class="flex gap-2 items-center bg-glass-bg border border-glass-border rounded-lg p-3">
+                        <span class="text-accent-1 text-xs font-bold w-5 shrink-0">R1</span>
+                        <p class="text-xs text-text-secondary">threatening language, stereotype invocation</p>
+                    </div>
+                    <div class="flex gap-2 items-center bg-glass-bg border border-glass-border rounded-lg p-3">
+                        <span class="text-accent-2 text-xs font-bold w-5 shrink-0">R2</span>
+                        <p class="text-xs text-text-secondary">threatening language</p>
+                    </div>
+                    <div class="flex gap-2 items-center bg-glass-bg border border-glass-border rounded-lg p-3">
+                        <span class="text-accent-3 text-xs font-bold w-5 shrink-0">R3-5</span>
+                        <p class="text-xs text-text-secondary">threatening language, dehumanization, …</p>
+                    </div>
+                    <div class="bg-glass-bg border border-accent-1 rounded-lg p-3" style="border-color:rgba(108,142,245,0.5);">
+                        <p class="text-xs font-semibold text-accent-1">✓ Canonical Set: <span class="text-text-secondary font-normal">threatening language, stereotype invocation</span></p>
+                        <p class="text-xs text-text-muted mt-1">count ≥ 2 threshold applied</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 11 : ROUTING MECHANISM
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="11">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:380px;height:380px;top:-80px;right:-60px;background:var(--color-accent-2);opacity:0.08;"></div>
+        <div class="blob" style="width:230px;height:230px;bottom:-40px;left:-30px;background:var(--color-accent-1);opacity:0.07;"></div>
+    </div>
+    <div class="content">
+        <p class="section-label reveal">Methodology - Routing</p>
+        <h2 class="font-display text-[clamp(1.5rem,2.8vw,2.1rem)] font-bold mb-4 reveal">Two Routing Strategies <span class="text-text-muted text-base font-normal">(Table 4.4)</span></h2>
+        <div class="grid grid-cols-2 gap-5">
+            <div class="reveal">
+                <div class="bg-glass-bg border border-glass-border rounded-xl p-4">
+                    <p class="text-accent-2 font-bold text-sm mb-2">Baseline: Log-Odds Router</p>
+                    <p class="text-xs text-text-secondary mb-3">Follows Symbolic-MoE (Chen et al., 2025). Expert score = global prior log-odds + sum of per-skill log-odds from inferred skills only. <em>Absent skills ignored.</em></p>
+                    <div class="bg-bg rounded p-2 text-xs font-mono text-text-muted">
+                        score(e) = prior(e) + Σ logodds(s,e) for s ∈ S_present
+                    </div>
+                </div>
+            </div>
+            <div class="reveal">
+                <div class="bg-glass-bg border border-glass-border rounded-xl p-4" style="border-color:rgba(108,142,245,0.3);">
+                    <p class="text-accent-1 font-bold text-sm mb-2">Proposed: Bernoulli Router ✨</p>
+                    <p class="text-xs text-text-secondary mb-3">Models each skill as a Bernoulli variable per expert. Uses <strong>both presence and absence</strong> of skills as informative signal. Even empty-skill posts get a meaningful ranking.</p>
+                    <div class="bg-bg rounded p-2 text-xs font-mono text-text-muted">
+                        score(e) = log P(e) + Σ log P(s|e) + Σ log(1-P(s|e))
+                    </div>
+                    <p class="text-xs text-text-muted mt-2">s_present / s_absent over full 11-skill vocabulary</p>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 reveal">
+            <p class="text-xs uppercase tracking-widest text-text-muted mb-2">End-to-End Pipeline (Figure 4.1)</p>
+            <div class="flex items-center gap-2 flex-wrap">
+                <div class="bg-glass-bg border border-glass-border rounded-lg px-3 py-2 text-xs text-text-secondary text-center">Raw Post</div>
+                <span class="text-accent-1 text-sm">→</span>
+                <div class="bg-glass-bg border border-glass-border rounded-lg px-3 py-2 text-xs text-text-secondary text-center">Skill Inference<br/>(LLaMA 5-run)</div>
+                <span class="text-accent-1 text-sm">→</span>
+                <div class="bg-glass-bg border border-glass-border rounded-lg px-3 py-2 text-xs text-text-secondary text-center">Bernoulli Router<br/>(top-k select)</div>
+                <span class="text-accent-1 text-sm">→</span>
+                <div class="bg-glass-bg border border-glass-border rounded-lg px-3 py-2 text-xs text-text-secondary text-center">Expert 1 … K<br/>(QLoRA LLaMA)</div>
+                <span class="text-accent-1 text-sm">→</span>
+                <div class="bg-glass-bg border border-glass-border rounded-lg px-3 py-2 text-xs text-text-secondary text-center">Multilabel<br/>Output + Skills</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 12 : EVALUATION PROTOCOL DIVIDER
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="12">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:460px;height:460px;top:-110px;right:-80px;background:var(--color-accent-3);opacity:0.12;"></div>
+        <div class="blob" style="width:260px;height:260px;bottom:-70px;left:-50px;background:var(--color-accent-2);opacity:0.09;"></div>
+    </div>
+    <canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1;"></canvas>
+    <div class="content text-center">
+        <p class="section-label reveal">Chapter 4.9</p>
+        <h2 class="font-display text-[clamp(2.5rem,6vw,4.5rem)] font-bold bg-linear-to-br from-accent-3 via-accent-2 to-accent-1 bg-clip-text text-transparent mb-4 reveal">Evaluation Protocol</h2>
+        <p class="text-text-muted text-base max-w-xl mx-auto reveal">Multi-expert evaluation under fragmented supervision: a prediction is correct if the gold label is produced by <em>any</em> activated expert.</p>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 13 : EVAL PROTOCOL DETAILS
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="13">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:340px;height:340px;top:-60px;right:-40px;background:var(--color-accent-3);opacity:0.07;"></div>
+        <div class="blob" style="width:210px;height:210px;bottom:-40px;left:-30px;background:var(--color-accent-1);opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <p class="section-label reveal">Evaluation Protocol</p>
+        <h2 class="font-display text-[clamp(1.5rem,2.8vw,2.1rem)] font-bold mb-5 reveal">How We Measure Multi-Expert Performance</h2>
+        <div class="grid grid-cols-2 gap-5">
+            <div class="reveal space-y-3">
+                <div class="accent-left">
+                    <p class="text-sm font-semibold text-text">Multi-Expert Correctness</p>
+                    <p class="text-xs text-text-muted mt-1">A prediction is correct if the gold normalized label is produced by <em>any</em> of the top-k routed experts. Mirrors the system's multi-alert design intent.</p>
+                </div>
+                <div class="accent-left-2">
+                    <p class="text-sm font-semibold text-text">Routing Metrics</p>
+                    <p class="text-xs text-text-muted mt-1"><strong>Top-1 Accuracy</strong>: highest-ranked expert matches gold expert. <strong>Gold-Expert Recall @top-k</strong>: correct expert appears in top-k ranked list.</p>
+                </div>
+                <div class="accent-left-3">
+                    <p class="text-sm font-semibold text-text">Task Performance Metrics</p>
+                    <p class="text-xs text-text-muted mt-1">Per-expert <strong>Accuracy</strong> and <strong>Macro F1</strong> on both validation and test splits. Reported across four benchmarks independently.</p>
+                </div>
+            </div>
+            <div class="reveal space-y-3">
+                <div class="bg-glass-bg border border-glass-border rounded-xl p-4">
+                    <p class="text-xs text-text-muted uppercase tracking-wider mb-2">Not a Standard Multilabel Eval</p>
+                    <p class="text-xs text-text-secondary">Since no single shared gold multilabel annotation exists, evaluation occurs <em>within each benchmark's label space</em>. The test assesses whether correct task experts are activated, not joint prediction of all four categories on one post.</p>
+                </div>
+                <div class="bg-glass-bg border border-glass-border rounded-xl p-4">
+                    <p class="text-xs text-text-muted uppercase tracking-wider mb-2">Key Design Principle</p>
+                    <p class="text-xs text-text-secondary">Pool separation is enforced: expert profiles built from profile pool only → routing calibrated on validation pool → final metrics on held-out test pool (1,920 posts). No data leakage.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 14 : RESULTS SECTION DIVIDER
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="14">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:500px;height:500px;top:-140px;right:-90px;background:var(--color-accent-1);opacity:0.14;"></div>
+        <div class="blob" style="width:290px;height:290px;bottom:-70px;left:-60px;background:var(--color-accent-3);opacity:0.10;"></div>
+    </div>
+    <canvas class="particle-canvas" style="position:absolute;inset:0;z-index:1;"></canvas>
+    <div class="content text-center">
+        <p class="section-label reveal">Chapter 5</p>
+        <h2 class="font-display text-[clamp(2.5rem,6vw,4.5rem)] font-bold bg-linear-to-br from-accent-1 via-accent-3 to-accent-2 bg-clip-text text-transparent mb-4 reveal">Results &amp; Discussion</h2>
+        <p class="text-text-muted text-base max-w-xl mx-auto reveal">Expert performance · Skill distributions · Routing behavior · Interpretability</p>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 15 : EXPERT PERFORMANCE (KEY NUMBERS)
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="15">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:360px;height:360px;top:-70px;right:-50px;background:var(--color-accent-1);opacity:0.08;"></div>
+        <div class="blob" style="width:220px;height:220px;bottom:-40px;left:-30px;background:var(--color-accent-2);opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <p class="section-label reveal">Results</p>
+        <h2 class="font-display text-[clamp(1.5rem,2.8vw,2.1rem)] font-bold mb-4 reveal">Task-Specific Expert Performance <span class="text-text-muted text-base font-normal">(Tables 5.1–5.4, 5.6–5.7)</span></h2>
+        <div class="grid grid-cols-4 gap-3 reveal">
+            <div class="bg-glass-bg border border-glass-border rounded-xl p-4 text-center hover:-translate-y-1 transition">
+                <p class="text-xs text-text-muted mb-1">Hate Expert</p>
+                <p class="text-3xl font-bold text-accent-1 stat-glow" data-count="914" data-suffix="">0.914</p>
+                <p class="text-xs text-text-muted mt-1">Macro F1 (test)</p>
+                <p class="text-xs text-text-secondary mt-2">NB Top-1; beats fine-tuned RoBERTa baseline on DynaHate</p>
+            </div>
+            <div class="bg-glass-bg border border-glass-border rounded-xl p-4 text-center hover:-translate-y-1 transition">
+                <p class="text-xs text-text-muted mb-1">Offense Expert</p>
+                <p class="text-3xl font-bold text-accent-2 stat-glow">0.858</p>
+                <p class="text-xs text-text-muted mt-1">Macro F1 (test)</p>
+                <p class="text-xs text-text-secondary mt-2">NB Top-1; most variable across k - task inherently harder</p>
+            </div>
+            <div class="bg-glass-bg border border-glass-border rounded-xl p-4 text-center hover:-translate-y-1 transition">
+                <p class="text-xs text-text-muted mb-1">Bully Expert</p>
+                <p class="text-3xl font-bold text-accent-3 stat-glow">0.988</p>
+                <p class="text-xs text-text-muted mt-1">Macro F1 (test)</p>
+                <p class="text-xs text-text-secondary mt-2">NB Top-2; surpasses reported supervised SOSNet models</p>
+            </div>
+            <div class="bg-glass-bg border border-glass-border rounded-xl p-4 text-center hover:-translate-y-1 transition">
+                <p class="text-xs text-text-muted mb-1">Threat Expert</p>
+                <p class="text-3xl font-bold stat-glow" style="color:#f472b6;">0.966</p>
+                <p class="text-xs text-text-muted mt-1">Macro F1 (test)</p>
+                <p class="text-xs text-text-secondary mt-2">NB Top-2; outperforms Jigsaw benchmark accuracy</p>
+            </div>
+        </div>
+        <div class="mt-4 reveal">
+            <p class="text-xs text-text-muted mb-2 uppercase tracking-wider">Overall Routed System - Test Pool (Table 5.8)</p>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="bg-glass-bg border border-glass-border rounded-lg p-3 text-center">
+                    <p class="text-2xl font-bold text-accent-1">0.8135</p>
+                    <p class="text-xs text-text-muted">Overall Test Accuracy</p>
+                    <p class="text-xs text-text-muted">(NB Top-2 operating point)</p>
+                </div>
+                <div class="bg-glass-bg border border-glass-border rounded-lg p-3 text-center">
+                    <p class="text-2xl font-bold text-accent-2">0.9276</p>
+                    <p class="text-xs text-text-muted">Overall Macro F1</p>
+                    <p class="text-xs text-text-muted">across 4 harmful-language categories</p>
+                </div>
+                <div class="bg-glass-bg border border-glass-border rounded-lg p-3 text-center">
+                    <p class="text-2xl font-bold text-accent-3">≈ 0.93</p>
+                    <p class="text-xs text-text-muted">Abstract reported F1</p>
+                    <p class="text-xs text-text-muted">headline result</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 16 : SKILL DISTRIBUTIONS & EXPERT PROFILES
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="16">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:360px;height:360px;top:-70px;left:-60px;background:var(--color-accent-3);opacity:0.07;"></div>
+        <div class="blob" style="width:210px;height:210px;bottom:-40px;right:-30px;background:var(--color-accent-1);opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <p class="section-label reveal">Results</p>
+        <h2 class="font-display text-[clamp(1.5rem,2.8vw,2.1rem)] font-bold mb-4 reveal">Skill Distributions &amp; Expert Profiles <span class="text-text-muted text-base font-normal">(Figures 5.1–5.3)</span></h2>
+        <div class="grid grid-cols-2 gap-5">
+            <div class="reveal">
+                <p class="text-xs uppercase tracking-widest text-text-muted mb-2">Dataset Skill Heatmap - Figure 5.1</p>
+                <div class="bg-glass-bg border border-glass-border rounded-xl p-4 mb-3">
+                    <p class="text-xs text-text-secondary">Each cell shows how often a skill is inferred for posts from each dataset. <strong>DynaHate</strong> → identity targeting, dehumanization dominant. <strong>TweetEval</strong> → general insult, coded hostility. <strong>SOSNet</strong> → bullying-specific skills elevated. <strong>Jigsaw</strong> → threatening language dominant.</p>
+                    <p class="text-xs text-text-muted mt-2 italic">Semantically meaningful structure - not random allocations - supports RQ3.</p>
+                </div>
+                <p class="text-xs uppercase tracking-widest text-text-muted mb-2">Skill Distributions - Figure 5.2</p>
+                <div class="bg-glass-bg border border-glass-border rounded-xl p-3">
+                    <p class="text-xs text-text-secondary">Frequency distribution of inferred skills across all 19,592 processed posts. High-frequency skills (coded hostility, general insult) appear broadly - contributing to routing overlap.</p>
+                </div>
+            </div>
+            <div class="reveal">
+                <p class="text-xs uppercase tracking-widest text-text-muted mb-2">Expert Profiles Heatmap - Figure 5.3</p>
+                <div class="bg-glass-bg border border-glass-border rounded-xl p-4 mb-3">
+                    <p class="text-xs text-text-secondary mb-2">Example from Figure 4.3 - Hate Expert Profile:</p>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs"><span class="text-text-muted">identity targeting</span><div class="w-32 h-2 rounded bg-bg overflow-hidden"><div class="h-full rounded" style="width:95.4%;background:linear-gradient(90deg,var(--color-accent-1),var(--color-accent-2));"></div></div><span class="text-accent-1 font-semibold">0.954</span></div>
+                        <div class="flex justify-between text-xs"><span class="text-text-muted">dehumanization</span><div class="w-32 h-2 rounded bg-bg overflow-hidden"><div class="h-full rounded" style="width:93.7%;background:linear-gradient(90deg,var(--color-accent-1),var(--color-accent-2));"></div></div><span class="text-accent-1 font-semibold">0.937</span></div>
+                        <div class="flex justify-between text-xs"><span class="text-text-muted">coded hostility</span><div class="w-32 h-2 rounded bg-bg overflow-hidden"><div class="h-full rounded" style="width:88.2%;background:linear-gradient(90deg,var(--color-accent-1),var(--color-accent-2));"></div></div><span class="text-accent-2 font-semibold">0.882</span></div>
+                        <div class="flex justify-between text-xs"><span class="text-text-muted">sexual harassment</span><div class="w-32 h-2 rounded bg-bg overflow-hidden"><div class="h-full rounded" style="width:79.6%;background:linear-gradient(90deg,var(--color-accent-2),var(--color-accent-3));"></div></div><span class="text-accent-2 font-semibold">0.796</span></div>
+                    </div>
+                    <p class="text-xs text-text-muted mt-2 italic">Profiles capture skill-conditioned competence - not just global accuracy (Table 5.5).</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 17 : ROUTING BEHAVIOR
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="17">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:360px;height:360px;top:-70px;right:-60px;background:var(--color-accent-1);opacity:0.08;"></div>
+        <div class="blob" style="width:210px;height:210px;bottom:-40px;left:-30px;background:var(--color-accent-2);opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <p class="section-label reveal">Results</p>
+        <h2 class="font-display text-[clamp(1.5rem,2.8vw,2.1rem)] font-bold mb-4 reveal">Routing Performance: Bernoulli vs Baseline <span class="text-text-muted text-base font-normal">(Table 5.8)</span></h2>
+        <div class="grid grid-cols-2 gap-5">
+            <div class="reveal">
+                <p class="text-xs uppercase tracking-widest text-text-muted mb-2">Validation Pool Routing Metrics</p>
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-text-secondary">Top-1 Accuracy - Baseline</span><span class="text-text-muted">0.635</span></div>
+                        <div class="bar-track"><div class="bar-fill" data-width="63.5" style="width:63.5%;background:linear-gradient(90deg,rgba(108,142,245,0.4),rgba(108,142,245,0.6));"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-text-secondary">Top-1 Accuracy - Bernoulli</span><span class="text-accent-1 font-bold">0.682</span></div>
+                        <div class="bar-track"><div class="bar-fill" data-width="68.2" style="width:68.2%;background:linear-gradient(90deg,var(--color-accent-1),var(--color-accent-2));"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-text-secondary">Gold Recall @top-2 - Baseline</span><span class="text-text-muted">0.508</span></div>
+                        <div class="bar-track"><div class="bar-fill" data-width="50.8" style="width:50.8%;background:linear-gradient(90deg,rgba(167,139,250,0.4),rgba(167,139,250,0.6));"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-text-secondary">Gold Recall @top-2 - Bernoulli</span><span class="text-accent-2 font-bold">0.713</span></div>
+                        <div class="bar-track"><div class="bar-fill" data-width="71.3" style="width:71.3%;background:linear-gradient(90deg,var(--color-accent-2),var(--color-accent-3));"></div></div>
+                    </div>
+                </div>
+                <p class="text-xs text-text-muted mt-3 italic">+4.7 pp top-1, +20.5 pp gold recall - Bernoulli clearly superior (Table 5.8)</p>
+            </div>
+            <div class="reveal">
+                <p class="text-xs uppercase tracking-widest text-text-muted mb-2">Routing System Per-Dataset (Table 5.9)</p>
+                <div class="bg-glass-bg border border-glass-border rounded-xl p-4 space-y-3">
+                    <div class="flex justify-between text-xs items-center"><span class="text-text-secondary">DynaHate</span><span class="text-accent-1 font-bold">strong routing recall</span></div>
+                    <div class="flex justify-between text-xs items-center"><span class="text-text-secondary">SOSNet</span><span class="text-accent-3 font-bold">highest expert F1 0.988</span></div>
+                    <div class="flex justify-between text-xs items-center"><span class="text-text-secondary">TweetEval-Off.</span><span class="text-accent-2 font-bold">most variable (task hardest)</span></div>
+                    <div class="flex justify-between text-xs items-center"><span class="text-text-secondary">Jigsaw Threat</span><span style="color:#f472b6;" class="font-bold">consistent threat recall</span></div>
+                </div>
+                <div class="bg-glass-bg border border-glass-border rounded-xl p-4 mt-3">
+                    <p class="text-xs text-text-muted uppercase tracking-wider mb-1">Key Insight</p>
+                    <p class="text-xs text-text-secondary">Routing is only <em>partially selective</em> - high-frequency overlapping skills (coded hostility, general insult) are shared across experts. This reflects inherent conceptual overlap in harmful-language categories, not a model flaw.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 18 : INTERPRETABILITY (WITH ROUTING EXAMPLES)
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="18">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:340px;height:340px;top:-60px;right:-40px;background:var(--color-accent-2);opacity:0.07;"></div>
+        <div class="blob" style="width:210px;height:210px;bottom:-40px;left:-30px;background:var(--color-accent-3);opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <p class="section-label reveal">Results</p>
+        <h2 class="font-display text-[clamp(1.5rem,2.8vw,2.1rem)] font-bold mb-4 reveal">Interpretability of Symbolic Routing <span class="text-text-muted text-base font-normal">(Figure 4.2)</span></h2>
+        <p class="text-xs text-text-muted mb-3 reveal">Traceable chain: <strong>Post text → Inferred skills → Ranked experts → Predictions</strong></p>
+        <div class="space-y-3 reveal">
+            <div class="bg-glass-bg border border-glass-border rounded-xl p-4">
+                <p class="text-xs text-text-muted mb-1 uppercase tracking-wider">Example 1 - Identity-based hate</p>
+                <p class="text-xs italic text-text-secondary mb-2">"I can't tell the difference between transgenders and transvestites - they're both sick to me"</p>
+                <div class="flex flex-wrap gap-1 mb-2"><span class="skill-chip">dehumanization</span><span class="skill-chip">stereotype invocation</span><span class="skill-chip">general insult</span></div>
+                <p class="text-xs text-accent-1">Predictions: Hate 0.98 · Offense 0.93</p>
+            </div>
+            <div class="bg-glass-bg border border-glass-border rounded-xl p-4">
+                <p class="text-xs text-text-muted mb-1 uppercase tracking-wider">Example 2 - Threat + Bully overlap</p>
+                <p class="text-xs italic text-text-secondary mb-2">"You keep running your mouth and I'll deal with you myself, pathetic little freak."</p>
+                <div class="flex flex-wrap gap-1 mb-2"><span class="skill-chip">threatening language</span><span class="skill-chip">coded hostility</span><span class="skill-chip">general insult</span></div>
+                <p class="text-xs text-accent-3">Predictions: Bully 0.97 · Threat 0.95</p>
+            </div>
+            <div class="bg-glass-bg border border-glass-border rounded-xl p-4">
+                <p class="text-xs text-text-muted mb-1 uppercase tracking-wider">Example 3 - Dehumanization + Threat</p>
+                <p class="text-xs italic text-text-secondary mb-2">"These [Group] are literal vermin. We need to eradicate them all."</p>
+                <div class="flex flex-wrap gap-1 mb-2"><span class="skill-chip">dehumanization</span><span class="skill-chip">stereotype invocation</span><span class="skill-chip">threatening language</span></div>
+                <p class="text-xs" style="color:#f472b6;">Predictions: Hate 0.95 · Threat 0.99</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 19 : CONCLUSION
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="19">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:420px;height:420px;top:-90px;right:-70px;background:var(--color-accent-1);opacity:0.11;"></div>
+        <div class="blob" style="width:240px;height:240px;bottom:-50px;left:-40px;background:var(--color-accent-2);opacity:0.08;"></div>
+    </div>
+    <div class="content">
+        <p class="section-label reveal">Chapter 6</p>
+        <h2 class="font-display text-[clamp(1.7rem,3.5vw,2.5rem)] font-bold mb-5 reveal">Conclusion</h2>
+        <div class="grid grid-cols-2 gap-5">
+            <div class="reveal space-y-3">
+                <div class="accent-left">
+                    <p class="text-sm font-semibold text-text">RQ1 Answered ✓</p>
+                    <p class="text-xs text-text-muted mt-1">Binary specialists coordinated via symbolic routing <em>do</em> recover meaningful multilabel behavior - overall macro F1 ≈ 0.93 across four heterogeneous benchmarks.</p>
+                </div>
+                <div class="accent-left-2">
+                    <p class="text-sm font-semibold text-text">RQ2 Answered ✓</p>
+                    <p class="text-xs text-text-muted mt-1">Bernoulli router improves top-1 routing accuracy (+4.7 pp) and gold-expert recall @top-2 (+20.5 pp) over log-odds baseline on validation pool.</p>
+                </div>
+                <div class="accent-left-3">
+                    <p class="text-sm font-semibold text-text">RQ3 Answered ✓</p>
+                    <p class="text-xs text-text-muted mt-1">Symbolic skills + expert profiles create fully auditable chains: post → skills → expert ranking → predictions. Misrouting diagnostically traceable.</p>
+                </div>
+            </div>
+            <div class="reveal space-y-3">
+                <div class="bg-glass-bg border border-glass-border rounded-xl p-4">
+                    <p class="text-xs text-text-muted uppercase tracking-wider mb-2">Key Takeaway</p>
+                    <p class="text-xs text-text-secondary">A <em>modular, interpretable MoE approach</em> to harmful-language detection is viable and practical under realistic academic compute. No unified multilabel dataset required - fragmented supervision can be coordinated.</p>
+                </div>
+                <div class="bg-glass-bg border border-glass-border rounded-xl p-4">
+                    <p class="text-xs text-text-muted uppercase tracking-wider mb-2">Broader Impact</p>
+                    <p class="text-xs text-text-secondary">Framework enables transparent moderation auditing - each routing decision is traceable to human-readable skills, addressing accountability requirements in real-world content moderation policy.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 20 : LIMITATIONS & FUTURE WORK
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="20">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:360px;height:360px;top:-70px;left:-60px;background:var(--color-accent-2);opacity:0.08;"></div>
+        <div class="blob" style="width:210px;height:210px;bottom:-40px;right:-30px;background:var(--color-accent-3);opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <p class="section-label reveal">Chapter 6.2</p>
+        <h2 class="font-display text-[clamp(1.6rem,3vw,2.3rem)] font-bold mb-5 reveal">Limitations &amp; Future Work</h2>
+        <div class="grid grid-cols-2 gap-5">
+            <div class="reveal">
+                <p class="text-xs uppercase tracking-widest text-text-muted mb-3">Current Limitations (RQ4)</p>
+                <div class="space-y-2">
+                    <div class="flex gap-2 items-start bg-glass-bg border border-glass-border rounded-lg p-3">
+                        <span class="text-yellow-400 text-sm shrink-0">⚠</span>
+                        <p class="text-xs text-text-secondary"><strong>No shared gold multilabel annotation</strong> - evaluation is per-benchmark, not truly joint multilabel. Cannot measure all four categories on the same post.</p>
+                    </div>
+                    <div class="flex gap-2 items-start bg-glass-bg border border-glass-border rounded-lg p-3">
+                        <span class="text-yellow-400 text-sm shrink-0">⚠</span>
+                        <p class="text-xs text-text-secondary"><strong>Routing partial selectivity</strong> - high-frequency overlapping skills (coded hostility, general insult) dilute routing precision due to inherent conceptual overlap across harmful categories.</p>
+                    </div>
+                    <div class="flex gap-2 items-start bg-glass-bg border border-glass-border rounded-lg p-3">
+                        <span class="text-yellow-400 text-sm shrink-0">⚠</span>
+                        <p class="text-xs text-text-secondary"><strong>Annotation biases inherited</strong> - all four benchmarks reflect known dataset biases (platform-specific, demographic over-flagging). Routing cannot correct upstream annotation noise.</p>
+                    </div>
+                    <div class="flex gap-2 items-start bg-glass-bg border border-glass-border rounded-lg p-3">
+                        <span class="text-yellow-400 text-sm shrink-0">⚠</span>
+                        <p class="text-xs text-text-secondary"><strong>Inference cost</strong> - 5-run stochastic skill inference × 4 experts adds latency unsuitable for real-time moderation at scale.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="reveal">
+                <p class="text-xs uppercase tracking-widest text-text-muted mb-3">Future Directions</p>
+                <div class="space-y-2">
+                    <div class="accent-left">
+                        <p class="text-sm font-semibold text-text">Build a true multilabel benchmark</p>
+                        <p class="text-xs text-text-muted mt-1">Annotate a shared corpus with hate + offense + bully + threat simultaneously for rigorous joint evaluation.</p>
+                    </div>
+                    <div class="accent-left-2">
+                        <p class="text-sm font-semibold text-text">Expand skill vocabulary</p>
+                        <p class="text-xs text-text-muted mt-1">Richer skill ontology could improve routing discrimination in the symbolic overlap zone.</p>
+                    </div>
+                    <div class="accent-left-3">
+                        <p class="text-sm font-semibold text-text">Efficient single-pass skill inference</p>
+                        <p class="text-xs text-text-muted mt-1">Distill stochastic 5-run inference into a single efficient skill classifier for production-scale use.</p>
+                    </div>
+                    <div style="border-left:3px solid #f472b6;" class="pl-4">
+                        <p class="text-sm font-semibold text-text">Extend to multilingual &amp; multimodal</p>
+                        <p class="text-xs text-text-muted mt-1">Apply routing framework to non-English content and image+text posts prevalent in social media.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 21 : THANK YOU / Q&A
+══════════════════════════════════════════════ -->
+<div class="slide" data-slide="21">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:520px;height:520px;top:-140px;right:-100px;background:var(--color-accent-1);opacity:0.15;"></div>
+        <div class="blob" style="width:300px;height:300px;bottom:-80px;left:-60px;background:var(--color-accent-2);opacity:0.12;"></div>
+        <div class="blob" style="width:200px;height:200px;top:50%;left:10%;background:var(--color-accent-3);opacity:0.09;"></div>
+    </div>
+    <canvas class="particle-canvas" style="position:absolute;inset:0;z-index:1;"></canvas>
+    <div class="content text-center">
+        <div style="font-size:80px;animation:float 3s ease-in-out infinite;margin-bottom:1rem;" class="reveal">🙏</div>
+        <h2 class="font-display text-[clamp(2.5rem,6vw,4rem)] font-bold bg-linear-to-br from-accent-1 via-accent-2 to-accent-3 bg-clip-text text-transparent mb-4 reveal">Thank You</h2>
+        <p class="text-text-muted tracking-[4px] uppercase text-sm mb-6 reveal">Questions &amp; Discussion</p>
+        <div class="grid grid-cols-3 gap-4 reveal">
+            <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-xl p-4">
+                <p class="text-accent-1 font-bold text-2xl">≈ 0.93</p>
+                <p class="text-xs text-text-muted mt-1">Overall Macro F1</p>
+            </div>
+            <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-xl p-4">
+                <p class="text-accent-2 font-bold text-2xl">+20.5 pp</p>
+                <p class="text-xs text-text-muted mt-1">Gold Recall Improvement</p>
+            </div>
+            <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-xl p-4">
+                <p class="text-accent-3 font-bold text-2xl">4 Tasks</p>
+                <p class="text-xs text-text-muted mt-1">Unified via Symbolic Routing</p>
+            </div>
+        </div>
+        <p class="text-text-muted text-xs mt-5 reveal">Mudit Baid · University of Georgia · May 2026 · Advisor: Dr. I. B. Arpinar</p>
+    </div>
+</div>
+
+</div><!-- end .deck -->
+
+<!-- NAVIGATION -->
+<div class="nav-controls">
+    <button class="nav-btn" onclick="changeSlide(-1)">&#8249;</button>
+    <div class="slide-dots" id="dots"></div>
+    <button class="nav-btn" onclick="changeSlide(1)">&#8250;</button>
+    <span class="slide-counter" id="counter">1 / 21</span>
+</div>
+
+<script>
+    let current = 1;
+    const total = document.querySelectorAll('.slide').length;
+    const dotsContainer = document.getElementById('dots');
+    const counter = document.getElementById('counter');
+    for (let i = 1; i <= total; i++) { const dot = document.createElement('div'); dot.className = 'dot' + (i === 1 ? ' active' : ''); dot.onclick = () => goToSlide(i); dotsContainer.appendChild(dot); }
+    function goToSlide(n) {
+        const prev = document.querySelector('.slide.active');
+        const next = document.querySelector(`.slide[data-slide="${n}"]`);
+        if (prev) prev.classList.remove('active');
+        if (next) { next.classList.add('active'); animateSlide(next); }
+        current = n; updateNav();
+    }
+    function changeSlide(dir) { let next = current + dir; if (next < 1) next = total; if (next > total) next = 1; goToSlide(next); }
+    function updateNav() { document.querySelectorAll('.dot').forEach((d, i) => { d.classList.toggle('active', i + 1 === current); }); counter.textContent = current + ' / ' + total; }
+    document.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); changeSlide(1); } if (e.key === 'ArrowLeft') { e.preventDefault(); changeSlide(-1); } });
+    let touchStartX = 0;
+    document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+    document.addEventListener('touchend', (e) => { const diff = touchStartX - e.changedTouches[0].clientX; if (Math.abs(diff) > 50) changeSlide(diff > 0 ? 1 : -1); });
+    function animateSlide(slide) {
+        slide.querySelectorAll('.reveal').forEach((el, i) => {
+            el.style.transition = 'none'; el.style.opacity = '0'; el.style.transform = 'translateY(20px)'; el.offsetHeight;
+            const delay = i * 0.08;
+            el.style.transition = `opacity 0.35s ease ${delay}s, transform 0.35s ease ${delay}s`;
+            el.style.opacity = '1'; el.style.transform = 'translateY(0px)';
+        });
+        animateSlideEffects(slide);
+    }
+    function animateSlideEffects(slide) {
+        slide.querySelectorAll('.bar-fill:not(.fill-init)').forEach((bar, i) => {
+            bar.classList.add('fill-init');
+            const target = bar.dataset.width;
+            if (target) { bar.style.width = '0%'; bar.style.transition = `width 0.6s ease ${i * 0.1}s`; bar.offsetHeight; bar.style.width = target + '%'; }
+        });
+    }
+    window.initParticles = function(canvas, options) {
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        canvas.width = canvas.offsetWidth || window.innerWidth; canvas.height = canvas.offsetHeight || window.innerHeight;
+        const interactive = options.interactive !== false;
+        const count = options.count || (interactive ? 55 : 18);
+        let mx = -1000, my = -1000;
+        const rgb = '108,142,245';
+        const [r, g, b] = rgb.split(',').map(Number);
+        const particles = Array.from({ length: count }, () => ({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3, size: Math.random() * 2.5 + 0.8, alpha: Math.random() * 0.35 + 0.1 }));
+        if (interactive) { canvas.addEventListener('mousemove', (e) => { const rect = canvas.getBoundingClientRect(); mx = e.clientX - rect.left; my = e.clientY - rect.top; }); canvas.addEventListener('mouseleave', () => { mx = -1000; my = -1000; }); }
+        (function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                if (interactive) { const dx = p.x - mx, dy = p.y - my, dist = Math.sqrt(dx*dx+dy*dy); if (dist < 120) { const force = (120-dist)/120*2; p.vx += (dx/dist)*force*0.1; p.vy += (dy/dist)*force*0.1; } }
+                p.vx *= 0.98; p.vy *= 0.98; p.x += p.vx; p.y += p.vy;
+                if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0; if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fillStyle = `rgba(${r},${g},${b},${p.alpha})`; ctx.fill();
+            });
+            requestAnimationFrame(animate);
+        })();
+    };
+    document.querySelectorAll('.particle-canvas').forEach(c => window.initParticles(c, { interactive: true, count: 55 }));
+    document.querySelectorAll('.particle-canvas-ambient').forEach(c => window.initParticles(c, { interactive: false, count: 18 }));
+    document.addEventListener('mousemove', (e) => {
+        const spotlight = document.querySelector('.mouse-spotlight');
+        if (spotlight) spotlight.style.background = `radial-gradient(600px circle at ${e.clientX}px ${e.clientY}px, rgba(108,142,245,0.06), transparent 40%)`;
+    });
+    try { animateSlide(document.querySelector('.slide.active')); } catch(e) { console.warn(e); }
+</script>
+</body>
+</html>

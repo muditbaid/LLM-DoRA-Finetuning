@@ -1,0 +1,34 @@
+<svg width="360" height="112" viewBox="0 0 360 112" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="body" x1="20" y1="16" x2="108" y2="104" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9ED9E6"/>
+      <stop offset="0.52" stop-color="#63AEC4"/>
+      <stop offset="1" stop-color="#315E92"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="17" y1="11" x2="122" y2="118" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D8F4FA"/>
+      <stop offset="1" stop-color="#79B9CC"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="360" height="112" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#8CA3B8" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <rect x="6" y="10" width="348" height="90" rx="26" fill="#F8FBFF"/>
+    <g transform="translate(18 14)">
+      <path d="M44 10C58 10 72 15 79 28C83 35 84 42 84 52V58C84 72 76 82 63 86C56 88 48 89 40 88C20 86 8 72 8 52V45C8 24 23 10 44 10Z" fill="url(#body)"/>
+      <path d="M34 56C27 66 24 74 24 84C18 83 14 79 13 73C12 65 17 58 28 52L34 56Z" fill="url(#body)"/>
+      <path d="M52 58C48 70 48 79 52 88C58 86 62 82 63 75C64 67 60 61 56 56L52 58Z" fill="url(#body)"/>
+      <path d="M67 48C77 52 82 60 80 68C79 76 73 81 65 81C67 70 66 61 61 52L67 48Z" fill="url(#body)"/>
+      <path d="M18 47C7 52 2 60 4 69C6 77 13 81 20 80C17 69 18 60 24 51L18 47Z" fill="url(#body)"/>
+      <path d="M23 21C17 19 10 22 7 28C4 34 6 41 12 45C12 36 16 28 23 21Z" fill="url(#accent)"/>
+      <path d="M66 21C72 19 79 22 82 28C85 34 83 41 77 45C77 36 73 28 66 21Z" fill="url(#accent)"/>
+      <circle cx="31" cy="39" r="7.5" fill="white"/>
+      <circle cx="57" cy="39" r="7.5" fill="white"/>
+      <circle cx="31" cy="39" r="3.6" fill="#27374E"/>
+      <circle cx="57" cy="39" r="3.6" fill="#27374E"/>
+      <path d="M38 50C41 53 47 53 50 50" stroke="#2E5A86" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <text x="128" y="66" fill="#101828" font-family="Manrope, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" letter-spacing="0.01em">NES Lab</text>
+  </g>
+</svg>

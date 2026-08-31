@@ -1,0 +1,23 @@
+{
+  "per_type": {
+    "age": {"precision": 0.9899, "recall": 0.9861, "f1": 0.9880, "support": 793},
+    "gender": {"precision": 0.9254, "recall": 0.9279, "f1": 0.9267, "support": 749},
+    "ethnicity": {"precision": 0.9858, "recall": 0.9905, "f1": 0.9881, "support": 839},
+    "religion": {"precision": 0.9504, "recall": 0.9677, "f1": 0.9590, "support": 773},
+    "none": {"precision": 0.9018, "recall": 0.8834, "f1": 0.8925, "support": 832}
+  },
+  "overall": {
+    "accuracy": 0.9511,
+    "macro_precision": 0.9507,
+    "macro_recall": 0.9511,
+    "macro_f1": 0.9509,
+    "weighted_precision": 0.9509,
+    "weighted_recall": 0.9511,
+    "weighted_f1": 0.9509,
+    "support": 3986
+  },
+  "prompt": {
+    "instruction": "Classify the following social media post. Return exactly one line in the format: label: bully|not_bully; type: <age|gender|ethnicity|religion|none>. Use lowercase exactly as shown. If the post is not bullying, set type to none. Do not include any extra words, explanations, or whitespace before or after the answer.",
+    "system": "You are a careful, consistent content\u2011moderation assistant. First decide whether the post is bullying; if it is, assign the most specific bullying type (age, gender, ethnicity, or religion). If it is not bullying, use type: none. Always output a single line exactly in this format: label: <label>; type: <type>, with no additional text or punctuation."
+  }
+}
