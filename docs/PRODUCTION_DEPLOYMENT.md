@@ -187,9 +187,6 @@ gcloud storage buckets add-iam-policy-binding gs://serml-app_cloudbuild `
 gcloud storage buckets add-iam-policy-binding gs://serml-app_cloudbuild `
   --member=$deployMember `
   --role="roles/storage.objectCreator"
-gcloud storage buckets add-iam-policy-binding gs://serml-app_cloudbuild `
-  --member=$deployMember `
-  --role="roles/storage.objectViewer"
 gcloud artifacts repositories add-iam-policy-binding serml-repo `
   --location=us-central1 `
   --project=$projectId `
@@ -274,6 +271,7 @@ gcloud storage buckets add-iam-policy-binding gs://serml-app-artifacts `
 try {
   gcloud builds submit . `
     --config=cloudbuild.stage-base-model.yaml `
+    --gcs-source-staging-dir=gs://serml-app_cloudbuild/source `
     --project=$projectId
   if ($LASTEXITCODE -ne 0) { throw "Base-model staging build failed" }
 } finally {
@@ -305,6 +303,7 @@ $image = "us-central1-docker.pkg.dev/serml-app/serml-repo/serml-api:$(git rev-pa
 
 gcloud builds submit . `
   --config=cloudbuild.yaml `
+  --gcs-source-staging-dir=gs://serml-app_cloudbuild/source `
   --substitutions="_IMAGE=$image" `
   --project=serml-app
 ```

@@ -52,6 +52,7 @@ jobs:
           image="${BACKEND_IMAGE}:${GITHUB_SHA}"
           gcloud builds submit . \
             --config=cloudbuild.yaml \
+            --gcs-source-staging-dir=gs://serml-app_cloudbuild/source \
             --substitutions="_IMAGE=${image}" \
             --project="${PROJECT_ID}" \
             --quiet
