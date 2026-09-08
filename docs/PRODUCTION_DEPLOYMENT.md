@@ -187,6 +187,9 @@ gcloud storage buckets add-iam-policy-binding gs://serml-app_cloudbuild `
 gcloud storage buckets add-iam-policy-binding gs://serml-app_cloudbuild `
   --member=$deployMember `
   --role="roles/storage.objectCreator"
+gcloud storage buckets add-iam-policy-binding gs://serml-app_cloudbuild `
+  --member=$deployMember `
+  --role="roles/storage.objectViewer"
 gcloud artifacts repositories add-iam-policy-binding serml-repo `
   --location=us-central1 `
   --project=$projectId `
