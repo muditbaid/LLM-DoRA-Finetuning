@@ -9,6 +9,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def _env_bool(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
 @dataclass(frozen=True)
 class Settings:
     app_name: str = os.getenv("APP_NAME", "SERML API")
@@ -28,6 +35,10 @@ class Settings:
 
     model_backend: str = os.getenv("MODEL_BACKEND", "local_inprocess")
     symbolic_moe_dir: str = os.getenv("SYMBOLIC_MOE_DIR", "../../symbolic-moe")
+    model_preload: bool = _env_bool("MODEL_PRELOAD", False)
+    model_warmup: bool = _env_bool("MODEL_WARMUP", False)
+    base_model_path: str | None = os.getenv("BASE_MODEL_PATH") or None
+    require_cuda: bool = _env_bool("REQUIRE_CUDA", False)
 
     hf_token: str | None = os.getenv("HF_TOKEN") or None
 
@@ -48,5 +59,5 @@ def resolve_symbolic_moe_dir() -> Path:
     if configured.is_absolute():
         return configured
 
-    backend_dir = Path(__file__).resolve().parents[2]
+    backend_dir = Path(__file__).resolve().parents[1]
     return (backend_dir / configured).resolve()

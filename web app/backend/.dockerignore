@@ -15,5 +15,4 @@ build/
 .gitignore
 README.md
 Dockerfile
-entrypoint.sh
 .dockerignore

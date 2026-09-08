@@ -200,3 +200,12 @@ saves/llama31-8b/*/qlora/.git/**
 
 external_downloads/
 jigsaw-unintended-bias-in-toxicity-classification/
+
+# Cloud Build stages private model artifacts here before building the image.
+web app/backend/model-artifacts/
+
+# Superseded local copy; Docker now uses the canonical root symbolic-moe tree.
+web app/backend/symbolic-moe-src/
+
+# Temporary credentials emitted by google-github-actions/auth.
+gha-creds-*.json

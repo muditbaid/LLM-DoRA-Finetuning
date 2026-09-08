@@ -1,0 +1,25 @@
+# Cloud Build only needs the backend runtime sources listed below. Model
+# artifacts are staged from GCS by cloudbuild.yaml after source extraction.
+**
+!.dockerignore
+!cloudbuild.yaml
+!cloudbuild.stage-base-model.yaml
+
+!scripts/
+!scripts/validate_model_snapshot.py
+
+!symbolic-moe/
+!symbolic-moe/*.py
+!symbolic-moe/profile_pool_skills.jsonl
+!symbolic-moe/profiles.json
+!symbolic-moe/skills.txt
+
+!web app/
+!web app/backend/
+!web app/backend/Dockerfile
+!web app/backend/entrypoint.sh
+!web app/backend/requirements.txt
+!web app/backend/app/
+!web app/backend/app/**
+web app/backend/app/**/__pycache__/
+web app/backend/app/**/*.pyc

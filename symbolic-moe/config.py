@@ -8,7 +8,8 @@ from pathlib import Path
 from typing import List
 
 
-BASE_MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+BASE_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
+BASE_MODEL_REVISION = "0e9e39f249a16976918f6564b8830bc894c89659"
 KEYWORD_MODEL = BASE_MODEL
 
 SYMBOLIC_ROOT = Path(__file__).resolve().parent

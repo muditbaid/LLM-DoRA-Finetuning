@@ -1,0 +1,18 @@
+.git
+.github
+gha-creds-*.json
+docs
+scripts
+saves
+web app/frontend
+web app/backend/symbolic-moe-src
+web app/backend/logs
+web app/backend/storage
+**/__pycache__
+**/*.pyc
+**/.env
+symbolic-moe/profile_pool.jsonl
+symbolic-moe/test_pool.jsonl
+symbolic-moe/test_pool_skills.jsonl
+symbolic-moe/validation_pool.jsonl
+symbolic-moe/validation_pool_skills.jsonl

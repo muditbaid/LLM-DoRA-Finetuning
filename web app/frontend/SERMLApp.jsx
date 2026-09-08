@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 
 const RAW_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API_BASE_URL = (RAW_API_BASE_URL || "").replace(/\/+$/, "");
+const ENABLE_MOCK_FALLBACK = import.meta.env.VITE_ENABLE_MOCK_FALLBACK === "true";
 
 const MOCK_RESPONSES = [
   {
@@ -168,9 +169,9 @@ export default function SERMLApp() {
       const endpoint = `${API_BASE_URL}/api/detect`;
       const response = await fetch(endpoint, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "1",
         },
         body: JSON.stringify({ text: clean }),
       });
@@ -184,11 +185,20 @@ export default function SERMLApp() {
       setResult(data);
       pushHistory(data);
     } catch (error) {
-      const fallback = getFallbackMock(clean);
       const reason = error instanceof Error ? error.message : "unknown error";
-      setErrorToast(`Remote API unreachable: ${reason}. Showing mock response.`);
-      setResult(fallback);
-      pushHistory(fallback);
+      const hint = API_BASE_URL
+        ? " Sign in with 'Connect protected API', then retry."
+        : " VITE_API_BASE_URL is not configured.";
+      const fallbackNote = ENABLE_MOCK_FALLBACK ? " Showing an explicitly enabled mock response." : "";
+      setErrorToast(`Remote API unavailable: ${reason}.${hint}${fallbackNote}`);
+
+      if (ENABLE_MOCK_FALLBACK) {
+        const fallback = getFallbackMock(clean);
+        setResult(fallback);
+        pushHistory(fallback);
+      } else {
+        setResult(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -233,7 +243,7 @@ export default function SERMLApp() {
 
       <header className="border-b border-[#ddd2bf] bg-[#fffaf0]/95 backdrop-blur">
         <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="max-w-4xl">
               <h1 className="text-2xl font-semibold tracking-tight text-[#1f2937] md:text-[2rem]">
                 Skill-Based LLM Driven Expert Routing Pipeline
@@ -242,6 +252,16 @@ export default function SERMLApp() {
                 Multilabel Harmful Speech Detection Pipeline for Social Media Post
               </p>
             </div>
+            {API_BASE_URL && (
+              <a
+                className="w-fit rounded-full border border-[#8ba9a3] bg-white px-4 py-2 text-sm font-semibold text-[#2f6f73] transition hover:bg-[#edf5f3]"
+                href={`${API_BASE_URL}/health/live`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Connect protected API
+              </a>
+            )}
           </div>
         </div>
       </header>

@@ -4,6 +4,8 @@ Model loading helpers for symbolic-moe experts.
 from __future__ import annotations
 
 import importlib.util
+import logging
+import os
 from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
@@ -34,7 +36,32 @@ def _load_config():
 
 config_mod = _load_config()
 BASE_MODEL = config_mod.BASE_MODEL
+BASE_MODEL_REVISION = config_mod.BASE_MODEL_REVISION
 ExpertConfig = config_mod.ExpertConfig
+LOGGER = logging.getLogger(__name__)
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _resolve_base_model() -> tuple[str, bool, str | None]:
+    configured = os.getenv("BASE_MODEL_PATH", "").strip()
+    if not configured:
+        revision = os.getenv("BASE_MODEL_REVISION", BASE_MODEL_REVISION).strip() or None
+        return BASE_MODEL, False, revision
+
+    local_path = Path(configured)
+    if (local_path / "config.json").is_file():
+        return str(local_path), True, None
+
+    raise FileNotFoundError(
+        f"BASE_MODEL_PATH={configured!r} does not contain config.json; "
+        "refusing an implicit runtime download"
+    )
 
 
 @dataclass
@@ -42,17 +69,43 @@ class SharedModelRuntime:
     use_quantization: bool = True
 
     def __post_init__(self) -> None:
+        cuda_available = torch.cuda.is_available()
+        if _env_bool("REQUIRE_CUDA") and not cuda_available:
+            raise RuntimeError("CUDA is required but torch.cuda.is_available() is false")
+
+        if cuda_available:
+            device_index = torch.cuda.current_device()
+            gpu_name = torch.cuda.get_device_name(device_index)
+            capability = ".".join(
+                str(part) for part in torch.cuda.get_device_capability(device_index)
+            )
+        else:
+            gpu_name = "none"
+            capability = "none"
+
+        LOGGER.info(
+            "ML runtime torch=%s cuda_runtime=%s cuda_available=%s gpu=%s capability=%s",
+            torch.__version__,
+            torch.version.cuda,
+            cuda_available,
+            gpu_name,
+            capability,
+        )
+
+        model_source, local_files_only, model_revision = _resolve_base_model()
         self.tokenizer = AutoTokenizer.from_pretrained(
-            BASE_MODEL,
+            model_source,
+            revision=model_revision,
             use_fast=True,
-            trust_remote_code=True,
+            trust_remote_code=False,
+            local_files_only=local_files_only,
         )
         if self.tokenizer.pad_token is None and self.tokenizer.eos_token is not None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
-        dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
+        dtype = torch.bfloat16 if cuda_available else torch.float32
         q_config: Optional[BitsAndBytesConfig] = None
-        if self.use_quantization and torch.cuda.is_available():
+        if self.use_quantization and cuda_available:
             q_config = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=torch.bfloat16,
@@ -61,11 +114,13 @@ class SharedModelRuntime:
             )
 
         self.model = AutoModelForCausalLM.from_pretrained(
-            BASE_MODEL,
+            model_source,
+            revision=model_revision,
             device_map="auto",
-            torch_dtype=dtype,
-            trust_remote_code=True,
+            dtype=dtype,
+            trust_remote_code=False,
             quantization_config=q_config,
+            local_files_only=local_files_only,
         )
         self.model.eval()
         self.loaded_adapters: set[str] = set()

@@ -1,0 +1,78 @@
+substitutions:
+  _IMAGE: us-central1-docker.pkg.dev/serml-app/serml-repo/serml-api:manual
+  _ARTIFACTS_URI: gs://serml-app-artifacts/artifacts
+  _BASE_MODEL_URI: gs://serml-app-artifacts/artifacts/base-model/0e9e39f249a16976918f6564b8830bc894c89659
+  _BASE_MODEL_REPO: meta-llama/Llama-3.1-8B-Instruct
+  _BASE_MODEL_REVISION: 0e9e39f249a16976918f6564b8830bc894c89659
+
+steps:
+  - id: stage-private-model-artifacts
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        stage_dir="/workspace/web app/backend/model-artifacts"
+        rm -rf "$${stage_dir}"
+        mkdir -p "$${stage_dir}/saves" "$${stage_dir}/symbolic-moe"
+
+        for adapter in \
+          dynahate \
+          tweeteval_offensive \
+          kaggle_cyberbullying \
+          jigsaw_threat; do
+          adapter_dir="$${stage_dir}/saves/llama31-8b/$${adapter}/qlora"
+          mkdir -p "$${adapter_dir}"
+          gcloud storage cp \
+            "${_ARTIFACTS_URI}/saves/llama31-8b/$${adapter}/qlora/adapter_config.json" \
+            "$${adapter_dir}/adapter_config.json"
+          gcloud storage cp \
+            "${_ARTIFACTS_URI}/saves/llama31-8b/$${adapter}/qlora/adapter_model.safetensors" \
+            "$${adapter_dir}/adapter_model.safetensors"
+          test -f "$${adapter_dir}/adapter_config.json"
+          test -f "$${adapter_dir}/adapter_model.safetensors"
+        done
+
+        gcloud storage cp "${_ARTIFACTS_URI}/symbolic-moe/profiles.json" \
+          "$${stage_dir}/symbolic-moe/profiles.json"
+        gcloud storage cp "${_ARTIFACTS_URI}/symbolic-moe/skills.txt" \
+          "$${stage_dir}/symbolic-moe/skills.txt"
+
+        marker_generation="$$(gcloud storage objects describe \
+          "${_BASE_MODEL_URI}/.complete" \
+          --format='value(generation)')"
+        test -n "$${marker_generation}"
+        echo "Staging pre-cached base model from ${_BASE_MODEL_URI}"
+        mkdir -p "$${stage_dir}/base-model"
+        gcloud storage rsync "${_BASE_MODEL_URI}" "$${stage_dir}/base-model" --recursive
+        test -f "$${stage_dir}/base-model/.complete"
+        python3 scripts/validate_model_snapshot.py "$${stage_dir}/base-model" \
+          --expected-repo "${_BASE_MODEL_REPO}" \
+          --expected-revision "${_BASE_MODEL_REVISION}" \
+          --require-manifest
+        marker_generation_after="$$(gcloud storage objects describe \
+          "${_BASE_MODEL_URI}/.complete" \
+          --format='value(generation)')"
+        test "$${marker_generation_after}" = "$${marker_generation}"
+
+  - id: build-backend-image
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file
+      - web app/backend/Dockerfile
+      - --tag
+      - ${_IMAGE}
+      - .
+
+images:
+  - ${_IMAGE}
+
+serviceAccount: projects/serml-app/serviceAccounts/serml-build@serml-app.iam.gserviceaccount.com
+
+options:
+  machineType: E2_HIGHCPU_8
+  diskSizeGb: 100
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 3600s

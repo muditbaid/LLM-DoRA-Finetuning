@@ -4,7 +4,7 @@ Product-facing branch for a multilabel harmful-speech detection system that comb
 
 [Web UI](https://sberhsd.muditb0712.workers.dev)  
 [Project Page](https://muditbaid.github.io/Skill-Based-Expert-Routing-System-For-Multilabel-Hate-Speech-Detection/)  
-[API (Cloud Run)](https://serml-api-XXXXXX-uc.a.run.app/docs)
+[Production deployment guide](docs/PRODUCTION_DEPLOYMENT.md)
 
 ## Project Preview
 
@@ -215,140 +215,31 @@ This repository inherits the upstream project license in `LICENSE`.
 
 ## Production Deployment
 
-### Architecture
+The current end-to-end guide is in
+[docs/PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md).
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        CLOUDFLARE PAGES                         │
-│  https://sberhsd.muditb0712.workers.dev                         │
-│  ─────────────────────────────────────────────────────────────  │
-│  React + Vite + Tailwind  │  Calls /api/detect via fetch       │
-└─────────────────────────────────────────────────────────────────┘
-                              │ HTTPS
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     GOOGLE CLOUD RUN (GPU)                      │
-│  https://serml-api-XXXXXX-uc.a.run.app                          │
-│  ─────────────────────────────────────────────────────────────  │
-│  FastAPI + 4 QLoRA Experts (LLaMA-3.1-8B) on L4 GPU            │
-│  Startup: downloads artifacts from GCS → warmup → serve        │
-│  Scales to 0 when idle (cost ≈ $0)                              │
-│  Auth: Cloud Run IAP (Google OAuth)                             │
-│  Rate limiting: 10 req/min per IP                               │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                        GCS BUCKET                               │
-│  gs://serml-app-artifacts/artifacts/                            │
-│  ├── saves/llama31-8b/*/qlora/  (4 adapters ~8GB)              │
-│  ├── symbolic-moe/profiles.json                                │
-│  └── symbolic-moe/skills.txt                                   │
-└─────────────────────────────────────────────────────────────────┘
-```
+Important production defaults:
 
-### Prerequisites
+- Run `gcloud builds submit` from the repository root, where
+  `cloudbuild.yaml` is located.
+- Cloud Build stages the private GCS model artifacts before building; the
+  running container does not download them with `gcloud`.
+- The base model is baked into the image, keeping scale-from-zero startup inside
+  Cloud Run's startup-probe deadline.
+- The image pins a CUDA 12.4-compatible PyTorch/Triton stack and installs the
+  Python development headers required for Triton JIT compilation.
+- Cloud Run uses one non-zonally-redundant L4 GPU, 8 vCPU, 32 GiB memory,
+  concurrency 1, and a maximum of one instance.
+- `/health/live` reports process health. `/health/ready` stays at HTTP 503 until
+  the base model and all four adapters are loaded and their CUDA/Triton warmup
+  succeeds. Production also fails readiness when CUDA is unavailable.
+- Cloud Run probes `/health/ready`, so an unhealthy revision is never promoted
+  to production traffic.
+- Cloud Run's direct IAP integration protects the `run.app` URL without a load
+  balancer. The frontend includes credentials after the user establishes an IAP
+  browser session.
 
-- GCP project `serml-app` with billing enabled
-- $300 free credits (covers ~10 months of typical usage)
-- Cloudflare account for Pages hosting
-- HF token for Llama model access
-
-### One-time GCP Setup
-
-```bash
-# 1. Create service account
-gcloud iam service-accounts create serml-api \
-  --display-name="SERML API Backend" \
-  --project=serml-app
-
-# 2. Grant GCS access
-gcloud projects add-iam-policy-binding serml-app \
-  --member="serviceAccount:serml-api@serml-app.iam.gserviceaccount.com" \
-  --role="roles/storage.objectViewer"
-
-# 3. Create HF token secret
-echo -n "your_hf_token" | gcloud secrets create hf-token --data-file=- --project=serml-app
-
-# 4. Grant secret access
-gcloud secrets add-iam-policy-binding hf-token \
-  --member="serviceAccount:serml-api@serml-app.iam.gserviceaccount.com" \
-  --role="roles/secretmanager.secretAccessor" \
-  --project=serml-app
-
-# 5. Enable IAP
-gcloud services enable iap.googleapis.com --project=serml-app
-
-# 6. Create Artifact Registry repo
-gcloud artifacts repositories create serml-repo \
-  --repository-format=docker \
-  --location=us-west1 \
-  --project=serml-app
-```
-
-### Manual Deploy (Backend)
-
-```bash
-# Build & push
-gcloud builds submit --tag us-west1-docker.pkg.dev/serml-app/serml-repo/serml-api:latest web app/backend
-
-# Deploy to Cloud Run with L4 GPU
-gcloud run deploy serml-api \
-  --image=us-west1-docker.pkg.dev/serml-app/serml-repo/serml-api:latest \
-  --region=us-west1 \
-  --gpu=1 --gpu-type=nvidia-l4 \
-  --memory=16Gi --cpu=4 \
-  --min-instances=0 --max-instances=3 \
-  --concurrency=1 --timeout=300 --port=8000 \
-  --set-env-vars=MODEL_BACKEND=local_inprocess,SYMBOLIC_MOE_DIR=/app/symbolic-moe,APP_ENV=prod,ALLOW_ORIGINS=https://sberhsd.muditb0712.workers.dev \
-  --set-secrets=HF_TOKEN=hf-token:latest \
-  --service-account=serml-api@serml-app.iam.gserviceaccount.com \
-  --ingress=internal-and-cloud-load-balancing \
-  --project=serml-app
-```
-
-### Manual Deploy (Frontend)
-
-1. Connect `Skill-Based-Expert-Routing-System-For-Multilabel-Hate-Speech-Detection-main` to Cloudflare Pages
-2. Build settings:
-   - Build command: `cd web app/frontend && npm run build`
-   - Output directory: `web app/frontend/dist`
-3. Environment variables:
-   - `VITE_API_BASE_URL` = Cloud Run service URL from above
-4. Custom domain: `sberhsd.muditb0712.workers.dev`
-
-### CI/CD (GitHub Actions)
-
-The `.github/workflows/deploy.yml` handles automated deployment on push to `main`.
-
-Required GitHub Secrets:
-- `GCP_SA_KEY` — Service account JSON with Cloud Run Admin, Artifact Registry Writer, Secret Manager Accessor
-- `CLOUDFLARE_API_TOKEN` — Pages deploy token
-- `CLOUDFLARE_ACCOUNT_ID` — Your Cloudflare account ID
-
-### Cost Estimate (Monthly)
-
-| Component | Estimate |
-|-----------|----------|
-| Cloud Run GPU (L4, ~100 req/day, 30s avg) | $15-30/mo |
-| Cloud Run CPU (scaled to 0) | $0 |
-| Artifact Registry (10GB) | ~$0.50/mo |
-| Cloudflare Pages | Free |
-| **Total** | **~$15-30/mo (free for 10+ months with $300 credits)** |
-
-### Local Development
-
-```bash
-# Backend
-cd web app/backend
-cp .env.example .env
-pip install -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-
-# Frontend (separate terminal)
-cd web app/frontend
-npm install
-cp .env.example .env
-# Set VITE_API_BASE_URL=http://localhost:8000 in .env
-npm run dev
-```
+The GitHub Actions workflow authenticates through branch-restricted Workload
+Identity Federation, builds and deploys the backend, verifies model warmup,
+builds the frontend with locked dependencies, and deploys the existing
+Cloudflare Worker through Wrangler.

@@ -24,6 +24,7 @@ Notebook file in this branch:
 ```bash
 !nvidia-smi
 !pip install -q -U pip
+!pip install -q torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124
 !pip install -q -r "web app/backend/requirements.txt" pyngrok
 ```
 
@@ -59,6 +60,8 @@ os.chdir(BACKEND_DIR)
 os.environ["APP_HOST"] = "0.0.0.0"
 os.environ["APP_PORT"] = "8000"
 os.environ["MODEL_BACKEND"] = "local_inprocess"
+os.environ["MODEL_PRELOAD"] = "true"
+os.environ["MODEL_WARMUP"] = "true"
 os.environ["SYMBOLIC_MOE_DIR"] = str(REPO_ROOT / "symbolic-moe")
 os.environ["ALLOW_ORIGINS"] = "http://localhost:5173,http://127.0.0.1:5173,https://sberhsd.muditb0712.workers.dev"
 os.environ["RUNS"] = "5"
@@ -114,7 +117,7 @@ proc = subprocess.Popen(
     stderr=subprocess.STDOUT,
 )
 
-deadline = time.time() + 300
+deadline = time.time() + 900
 while time.time() < deadline:
     if proc.poll() is not None:
         break
@@ -126,7 +129,7 @@ while time.time() < deadline:
         pass
     time.sleep(3)
 else:
-    raise RuntimeError("Backend did not become ready within 5 minutes.")
+    raise RuntimeError("Backend did not become ready within 15 minutes.")
 
 public_url = ngrok.connect(addr="127.0.0.1:8000", proto="http").public_url
 print("Backend PID:", proc.pid)
@@ -165,7 +168,7 @@ response = requests.post(
     f"{public_url}/api/detect",
     json=payload,
     headers={"ngrok-skip-browser-warning": "1"},
-    timeout=120,
+    timeout=900,
 )
 response.raise_for_status()
 print(json.dumps(response.json(), indent=2))
@@ -174,5 +177,8 @@ print(json.dumps(response.json(), indent=2))
 ## Notes
 
 - Colab sessions are temporary.
-- Backend startup loads the base Llama 3.1 model once, loads expert adapters once, builds the NB top-2 router once, and then serves requests.
+- With `MODEL_PRELOAD=true`, backend startup builds the NB top-2 router and
+  loads the base Llama 3.1 model plus all expert adapters in a background
+  thread. With `MODEL_WARMUP=true`, it also runs a real inference to exercise
+  CUDA/Triton. `/health/ready` returns HTTP 503 until that work completes.
 - The GCS bucket remains the source of truth for the deployed `profiles.json`.

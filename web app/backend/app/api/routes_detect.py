@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import time
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Response, status
 from fastapi.concurrency import run_in_threadpool
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -24,22 +24,26 @@ def _service(request: Request):
 
 
 @router.get("/health/live", response_model=HealthResponse)
-async def health_live() -> HealthResponse:
+async def health_live(request: Request) -> HealthResponse:
+    service = _service(request)
     return HealthResponse(
         status="ok",
         backend=settings.model_backend,
-        model_ready=True,
+        model_ready=service.is_model_ready(),
         timestamp=utc_now_iso(),
     )
 
 
 @router.get("/health/ready", response_model=HealthResponse)
-async def health_ready(request: Request) -> HealthResponse:
+async def health_ready(request: Request, response: Response) -> HealthResponse:
     service = _service(request)
+    model_ready = service.is_model_ready()
+    if not model_ready:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     return HealthResponse(
-        status="ok" if service.is_ready() else "degraded",
+        status="ok" if model_ready else service.model_status(),
         backend=settings.model_backend,
-        model_ready=service.is_ready(),
+        model_ready=model_ready,
         timestamp=utc_now_iso(),
     )
 
@@ -52,10 +56,16 @@ async def detect(payload: DetectRequest, request: Request) -> DetectResponse:
         raise HTTPException(status_code=503, detail="Inference backend is not ready")
 
     start = time.perf_counter()
+    LOGGER.info("Detection request received: text_len=%d", len(payload.text))
     try:
         result = await run_in_threadpool(service.detect, payload.text)
+        LOGGER.info("Detection succeeded: text_len=%d", len(payload.text))
     except ValueError as exc:
+        LOGGER.info("Invalid detection request: %s", exc)
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        LOGGER.exception("Inference backend unavailable")
+        raise HTTPException(status_code=503, detail="Inference backend unavailable") from exc
     except Exception as exc:  # noqa: BLE001
         LOGGER.exception("Detection failed")
         raise HTTPException(status_code=500, detail="Detection failed") from exc
