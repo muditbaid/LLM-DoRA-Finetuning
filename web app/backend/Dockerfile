@@ -1,3 +1,15 @@
+# Build the browser UI separately so the final CUDA image contains only the
+# compiled static assets, not Node.js or npm.
+FROM node:24-bookworm-slim AS frontend-builder
+
+WORKDIR /frontend
+COPY ["web app/frontend/package.json", "web app/frontend/package-lock.json", "./"]
+RUN npm ci
+COPY ["web app/frontend", "./"]
+ENV VITE_ENABLE_MOCK_FALLBACK=false \
+    VITE_REDIRECT_TO_API_ORIGIN=false
+RUN npm run build
+
 # Cloud Run GPU runtime. The development image is required because Triton JIT
 # compiles a small CUDA/Python helper on the first inference.
 FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
@@ -66,8 +78,10 @@ RUN test -d /app/artifacts/saves && \
     ln -s /app/artifacts/saves /app/saves
 
 COPY --chown=appuser:appuser ["web app/backend/app", "/app/app"]
+COPY --from=frontend-builder --chown=appuser:appuser /frontend/dist /app/static
 COPY --chown=appuser:appuser ["web app/backend/entrypoint.sh", "/entrypoint.sh"]
-RUN sed -i 's/\r$//' /entrypoint.sh && \
+RUN test -f /app/static/index.html && \
+    sed -i 's/\r$//' /entrypoint.sh && \
     chmod +x /entrypoint.sh
 
 USER appuser

@@ -196,7 +196,7 @@ For single-post inference and deployment, `symbolic-moe/predict_post.py` is the 
 
 ## Web App
 
-The Cloudflare-hosted frontend is available here:
+The Cloudflare convenience URL redirects to the IAP-protected application:
 
 [Web UI](https://sberhsd.muditb0712.workers.dev)
 
@@ -236,10 +236,9 @@ Important production defaults:
 - Cloud Run probes `/health/ready`, so an unhealthy revision is never promoted
   to production traffic.
 - Cloud Run's direct IAP integration protects the `run.app` URL without a load
-  balancer. The frontend includes credentials after the user establishes an IAP
-  browser session.
+  balancer. It serves the frontend and API from the same origin, avoiding
+  third-party IAP cookies; the Cloudflare URL redirects to that origin.
 
 The GitHub Actions workflow authenticates through branch-restricted Workload
-Identity Federation, builds and deploys the backend, verifies model warmup,
-builds the frontend with locked dependencies, and deploys the existing
-Cloudflare Worker through Wrangler.
+Identity Federation, builds and deploys the same-origin application, verifies
+model warmup, and deploys the Cloudflare redirect through Wrangler.

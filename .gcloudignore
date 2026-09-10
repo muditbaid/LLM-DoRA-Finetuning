@@ -23,3 +23,16 @@
 !web app/backend/app/**
 web app/backend/app/**/__pycache__/
 web app/backend/app/**/*.pyc
+
+!web app/frontend/
+!web app/frontend/assets/
+!web app/frontend/assets/**
+!web app/frontend/index.html
+!web app/frontend/main.jsx
+!web app/frontend/package.json
+!web app/frontend/package-lock.json
+!web app/frontend/postcss.config.js
+!web app/frontend/SERMLApp.jsx
+!web app/frontend/styles.css
+!web app/frontend/tailwind.config.js
+!web app/frontend/vite.config.js

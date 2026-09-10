@@ -4,7 +4,8 @@ gha-creds-*.json
 docs
 scripts
 saves
-web app/frontend
+**/node_modules
+**/dist
 web app/backend/symbolic-moe-src
 web app/backend/logs
 web app/backend/storage

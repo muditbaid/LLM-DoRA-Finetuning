@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -54,3 +56,10 @@ app.include_router(detect_router)
 async def metrics():
     """Prometheus metrics endpoint (placeholder for future instrumentation)."""
     return JSONResponse(content={"status": "ok", "message": "Metrics endpoint - integrate prometheus-fastapi-instrumentator for full metrics"})
+
+
+# Serving the UI and API from one IAP-protected origin avoids third-party
+# session cookies, which modern browsers block for cross-site AJAX requests.
+STATIC_DIR = Path("/app/static")
+if STATIC_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="frontend")

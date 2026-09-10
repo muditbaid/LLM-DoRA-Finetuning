@@ -18,9 +18,10 @@ Set backend URL in `.env`:
 VITE_API_BASE_URL=https://api.example.com
 ```
 
-Production CI injects the direct IAP-protected Cloud Run URL. Users must select
-**Connect protected API** once to establish an IAP browser session before the
-cross-origin API request can include that session cookie.
+The production container serves this UI and the API from the same direct
+IAP-protected Cloud Run origin. This avoids depending on third-party cookies for
+cross-site requests. The Cloudflare deployment redirects users to that protected
+origin; local development can still set `VITE_API_BASE_URL` explicitly.
 
 `VITE_ENABLE_MOCK_FALLBACK` defaults to `false`. Keep it disabled in production
 so an unavailable classifier cannot be mistaken for a real model result.

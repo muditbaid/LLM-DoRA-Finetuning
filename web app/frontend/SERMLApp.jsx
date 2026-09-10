@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 
 const RAW_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const API_BASE_URL = (RAW_API_BASE_URL || "").replace(/\/+$/, "");
+const API_BASE_URL = (RAW_API_BASE_URL || window.location.origin).replace(/\/+$/, "");
 const ENABLE_MOCK_FALLBACK = import.meta.env.VITE_ENABLE_MOCK_FALLBACK === "true";
+const REDIRECT_TO_API_ORIGIN = import.meta.env.VITE_REDIRECT_TO_API_ORIGIN === "true";
+const API_IS_CROSS_ORIGIN = new URL(API_BASE_URL, window.location.origin).origin !== window.location.origin;
 
 const MOCK_RESPONSES = [
   {
@@ -67,6 +69,12 @@ export default function SERMLApp() {
   const [historyOpen, setHistoryOpen] = useState(true);
   const [history, setHistory] = useState([]);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (REDIRECT_TO_API_ORIGIN && API_IS_CROSS_ORIGIN) {
+      window.location.replace(`${API_BASE_URL}/`);
+    }
+  }, []);
 
   useEffect(() => {
     try {
@@ -172,6 +180,7 @@ export default function SERMLApp() {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
         },
         body: JSON.stringify({ text: clean }),
       });
@@ -186,9 +195,9 @@ export default function SERMLApp() {
       pushHistory(data);
     } catch (error) {
       const reason = error instanceof Error ? error.message : "unknown error";
-      const hint = API_BASE_URL
+      const hint = API_IS_CROSS_ORIGIN
         ? " Sign in with 'Connect protected API', then retry."
-        : " VITE_API_BASE_URL is not configured.";
+        : " Refresh the page, then retry.";
       const fallbackNote = ENABLE_MOCK_FALLBACK ? " Showing an explicitly enabled mock response." : "";
       setErrorToast(`Remote API unavailable: ${reason}.${hint}${fallbackNote}`);
 
@@ -252,7 +261,7 @@ export default function SERMLApp() {
                 Multilabel Harmful Speech Detection Pipeline for Social Media Post
               </p>
             </div>
-            {API_BASE_URL && (
+            {API_IS_CROSS_ORIGIN && !REDIRECT_TO_API_ORIGIN && (
               <a
                 className="w-fit rounded-full border border-[#8ba9a3] bg-white px-4 py-2 text-sm font-semibold text-[#2f6f73] transition hover:bg-[#edf5f3]"
                 href={`${API_BASE_URL}/health/live`}

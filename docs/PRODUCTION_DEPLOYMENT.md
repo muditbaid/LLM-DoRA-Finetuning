@@ -11,7 +11,7 @@ Run `gcloud builds submit` from the Git repository root: the directory that
 contains `cloudbuild.yaml`, `.github/`, `symbolic-moe/`, and `web app/`.
 
 ```powershell
-Set-Location "E:\PROFILE\Projects\Skill-Based-Expert-Routing-System-For-Multilabel-Hate-Speech-Detection-main\Skill-Based-Expert-Routing-System-For-Multilabel-Hate-Speech-Detection-main"
+Set-Location "E:\PROFILE\Projects\Skill-Based-Expert-Routing-System-For-Multilabel-Hate-Speech-Detection-main"
 Test-Path .\cloudbuild.yaml
 ```
 
@@ -25,7 +25,8 @@ such as `\_`, `\@`, or `[url](url)` into the shell.
 
 ## Runtime architecture
 
-- A Cloudflare Worker serves the React/Vite static assets.
+- Cloud Run serves the React/Vite UI and API from the same protected origin.
+- The Cloudflare Worker redirects the public convenience URL to Cloud Run.
 - Cloud Run's direct IAP integration protects every ingress path, including the
   `run.app` URL, without requiring an external load balancer.
 - One L4 GPU instance loads a shared Llama 3.1 model and four QLoRA adapters.
@@ -34,9 +35,11 @@ such as `\_`, `\@`, or `[url](url)` into the shell.
 - The service scales to zero and is capped at one instance because the project
   currently has one non-zonally-redundant L4 GPU of regional quota.
 
-The GitHub workflow discovers the IAP-protected `run.app` URL and injects it as
-`VITE_API_BASE_URL`. A browser user must establish an IAP session before using
-the API from the Cloudflare origin.
+The GitHub workflow bakes the UI into the backend image without an external API
+URL. It also builds a small Cloudflare-hosted copy with `VITE_API_BASE_URL` and
+`VITE_REDIRECT_TO_API_ORIGIN=true`, so the convenience URL redirects to the
+same-origin IAP-protected application. This avoids third-party-cookie failures
+in modern browsers.
 
 ## One-time Google Cloud setup
 
@@ -384,10 +387,9 @@ traffic.
 
 ## Frontend and CI/CD
 
-The GitHub workflow in `.github/workflows/deploy.yml` builds the backend through
-Cloud Build, deploys Cloud Run, waits for the model-preload completion log,
-builds the frontend with the discovered service URL, and deploys the existing
-Cloudflare Worker with Wrangler.
+The GitHub workflow in `.github/workflows/deploy.yml` builds the same-origin UI
+into the backend image, deploys Cloud Run, waits for the model-preload completion
+log, and deploys the Cloudflare redirect build with Wrangler.
 
 Google Cloud authentication uses branch-restricted Workload Identity
 Federation, so no long-lived Google service-account key is stored in GitHub.
@@ -403,11 +405,9 @@ After the first successful federated deployment, delete the obsolete
 that exact key with `gcloud iam service-accounts keys delete`; do not guess a key
 ID or remove unrelated keys.
 
-Open the deployed frontend and select **Connect protected API**. Complete the
-Google/IAP sign-in in the new tab, then return to the frontend and analyze a
-sample. The frontend sends cross-origin cookies with API requests, and
-`iap-settings.yaml` allows the unauthenticated CORS preflight while IAP still
-protects the actual request.
+Open the Cloudflare URL. It redirects to the Cloud Run origin, where Google/IAP
+sign-in protects both the UI and API. Analyze a sample after sign-in; all browser
+API calls remain same-origin and do not rely on third-party cookies.
 
 ## Local development
 
